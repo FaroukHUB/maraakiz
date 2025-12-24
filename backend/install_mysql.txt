@@ -1,0 +1,7 @@
+# Pour utiliser MySQL avec Python, il faut installer mysqlclient
+# Ajoute cette ligne dans requirements.txt :
+
+mysqlclient==2.2.0
+
+# Puis lance :
+pip install -r requirements.txt
