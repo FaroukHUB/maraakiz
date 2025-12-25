@@ -4,12 +4,10 @@ import { Routes, Route } from "react-router-dom";
 // Composants communs
 import Header from "./components/Header";
 
-// Sections de la landing page
-import Hero from "./components/Hero";
-import Description from "./components/Description";
-import Avantages from "./components/Avantages";
-import Maraakizplus from "./components/Maraakizplus";
-import Professeurgrid from "./components/Professeurgrid";
+// Sections de la nouvelle landing page
+import HeroSearch from "./components/HeroSearch";
+import FilterChips from "./components/FilterChips";
+import ProfessorGrid from "./components/ProfessorGrid";
 
 // Pages
 import Tarifs from "./pages/Tarifs";
@@ -25,6 +23,8 @@ import CRMLayout from "./layouts/CRMLayout";
 
 
 function App() {
+  const [filters, setFilters] = React.useState({});
+
   return (
     <div className="font-[Poppins]">
       <Header />
@@ -35,11 +35,9 @@ function App() {
           path="/"
           element={
             <>
-              <Hero />
-              <Description />
-              <Avantages />
-              <Maraakizplus />
-              <Professeurgrid />
+              <HeroSearch />
+              <FilterChips onFilterChange={setFilters} />
+              <ProfessorGrid filters={filters} />
             </>
           }
         />
