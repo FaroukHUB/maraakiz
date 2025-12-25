@@ -137,7 +137,7 @@ const ProfProfile = () => {
 
                   {/* Bouton contact */}
                   <button className="w-full bg-gradient-to-r from-[#437C8B] to-[#35626f] text-white font-semibold py-3 rounded-xl hover:opacity-90 transition shadow-lg">
-                    Contacter le professeur
+                    {prof.type === "institut" ? "Contacter l'institut" : "Contacter le professeur"}
                   </button>
 
                   {/* Contact info */}
@@ -163,13 +163,86 @@ const ProfProfile = () => {
 
             {/* Colonne droite - Détails */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Cursus */}
-              {prof.cursus && (
+              {/* Cursus (Professeur) ou Présentation (Institut) */}
+              {prof.type === "professeur" && prof.cursus && (
                 <div className="bg-white rounded-2xl shadow-md p-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Cursus</h2>
                   <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                     {prof.cursus}
                   </p>
+                </div>
+              )}
+
+              {prof.type === "institut" && prof.presentationInstitut && (
+                <div className="bg-white rounded-2xl shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Présentation de l'institut</h2>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                    {prof.presentationInstitut}
+                  </p>
+                </div>
+              )}
+
+              {/* Équipe (Institut uniquement) */}
+              {prof.type === "institut" && (
+                <div className="bg-white rounded-2xl shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Notre équipe</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {prof.nombreProfesseurs > 0 && (
+                      <div className="flex items-center gap-3 p-4 bg-[#437C8B]/5 rounded-xl">
+                        <div className="flex-shrink-0 w-12 h-12 bg-[#437C8B] rounded-full flex items-center justify-center">
+                          <Users size={24} className="text-white" />
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-[#437C8B]">{prof.nombreProfesseurs}</div>
+                          <div className="text-sm text-gray-600">Professeurs dévoués et motivés</div>
+                        </div>
+                      </div>
+                    )}
+                    {prof.nombreSecretaires > 0 && (
+                      <div className="flex items-center gap-3 p-4 bg-[#437C8B]/5 rounded-xl">
+                        <div className="flex-shrink-0 w-12 h-12 bg-[#A8835D] rounded-full flex items-center justify-center text-white text-xl font-bold">
+                          📋
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-[#A8835D]">{prof.nombreSecretaires}</div>
+                          <div className="text-sm text-gray-600">Secrétaires pour votre suivi</div>
+                        </div>
+                      </div>
+                    )}
+                    {prof.nombreSuperviseurs > 0 && (
+                      <div className="flex items-center gap-3 p-4 bg-[#437C8B]/5 rounded-xl">
+                        <div className="flex-shrink-0 w-12 h-12 bg-[#437C8B] rounded-full flex items-center justify-center">
+                          <Shield size={24} className="text-white" />
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-[#437C8B]">{prof.nombreSuperviseurs}</div>
+                          <div className="text-sm text-gray-600">Superviseurs</div>
+                        </div>
+                      </div>
+                    )}
+                    {prof.nombreResponsablesPedagogiques > 0 && (
+                      <div className="flex items-center gap-3 p-4 bg-[#437C8B]/5 rounded-xl">
+                        <div className="flex-shrink-0 w-12 h-12 bg-[#35626f] rounded-full flex items-center justify-center text-white text-xl font-bold">
+                          🎓
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-[#35626f]">{prof.nombreResponsablesPedagogiques}</div>
+                          <div className="text-sm text-gray-600">Responsables pédagogiques</div>
+                        </div>
+                      </div>
+                    )}
+                    {prof.nombreGestionnaires > 0 && (
+                      <div className="flex items-center gap-3 p-4 bg-[#437C8B]/5 rounded-xl">
+                        <div className="flex-shrink-0 w-12 h-12 bg-[#A8835D] rounded-full flex items-center justify-center text-white text-xl font-bold">
+                          💼
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-[#A8835D]">{prof.nombreGestionnaires}</div>
+                          <div className="text-sm text-gray-600">Gestionnaires</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

@@ -6,13 +6,24 @@ class Merkez(Base):
     __tablename__ = "merkez"
 
     id = Column(Integer, primary_key=True, index=True)
+    type = Column(String(50), default="professeur")  # "professeur" ou "institut"
     nom = Column(String(255), nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=False)
     telephone = Column(String(50))
 
-    # Informations professionnelles
+    # Informations professionnelles (PROFESSEUR)
     bio = Column(Text)  # Deprecated - use cursus instead
-    cursus = Column(Text)  # Parcours académique et professionnel
+    cursus = Column(Text)  # Parcours académique et professionnel (professeur)
+
+    # Informations institutionnelles (INSTITUT)
+    presentation_institut = Column(Text)  # Présentation de l'institut
+    nombre_professeurs = Column(Integer, default=0)
+    nombre_secretaires = Column(Integer, default=0)
+    nombre_superviseurs = Column(Integer, default=0)
+    nombre_responsables_pedagogiques = Column(Integer, default=0)
+    nombre_gestionnaires = Column(Integer, default=0)
+
+    # Commun aux deux types
     programme = Column(Text)  # Programme enseigné
     livres = Column(Text)  # Livres et supports utilisés
     methodologie = Column(Text)  # Méthodologie pédagogique

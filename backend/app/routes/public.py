@@ -8,6 +8,7 @@ router = APIRouter()
 
 @router.get("/merkez")
 def get_public_merkez(
+    type: Optional[List[str]] = Query(None),
     matiere: Optional[List[str]] = Query(None),
     format: Optional[List[str]] = Query(None),
     niveau: Optional[List[str]] = Query(None),
@@ -17,11 +18,16 @@ def get_public_merkez(
     Récupère la liste des professeurs/instituts avec filtres optionnels.
 
     Filtres:
+    - type: professeur, institut
     - matiere: coran, arabe, tajwid, sciences
     - format: en-ligne, presentiel
     - niveau: debutant, intermediaire, avance
     """
     query = db.query(Merkez).filter(Merkez.actif == True)
+
+    # Filtre par type (professeur ou institut)
+    if type:
+        query = query.filter(Merkez.type.in_(type))
 
     # Filtre par matière
     if matiere:
@@ -45,6 +51,7 @@ def get_public_merkez(
     return [
         {
             "id": m.id,
+            "type": m.type,
             "nom": m.nom,
             "image": m.image_url,
             "note": m.note_moyenne,
@@ -76,10 +83,20 @@ def get_merkez_detail(merkez_id: int, db: Session = Depends(get_db)):
 
     return {
         "id": merkez.id,
+        "type": merkez.type,
         "nom": merkez.nom,
         "email": merkez.email,
         "telephone": merkez.telephone,
+        # Champs professeur
         "cursus": merkez.cursus,
+        # Champs institut
+        "presentationInstitut": merkez.presentation_institut,
+        "nombreProfesseurs": merkez.nombre_professeurs,
+        "nombreSecretaires": merkez.nombre_secretaires,
+        "nombreSuperviseurs": merkez.nombre_superviseurs,
+        "nombreResponsablesPedagogiques": merkez.nombre_responsables_pedagogiques,
+        "nombreGestionnaires": merkez.nombre_gestionnaires,
+        # Commun
         "programme": merkez.programme,
         "livres": merkez.livres,
         "methodologie": merkez.methodologie,

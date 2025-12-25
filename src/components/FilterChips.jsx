@@ -3,12 +3,17 @@ import { X } from "lucide-react";
 
 const FilterChips = ({ onFilterChange }) => {
   const [activeFilters, setActiveFilters] = useState({
+    type: [],
     matiere: [],
     format: [],
     niveau: []
   });
 
   const filterOptions = {
+    type: [
+      { value: "professeur", label: "Professeur particulier" },
+      { value: "institut", label: "Institut" }
+    ],
     matiere: [
       { value: "coran", label: "Coran" },
       { value: "arabe", label: "Arabe" },
@@ -41,8 +46,8 @@ const FilterChips = ({ onFilterChange }) => {
   };
 
   const clearAllFilters = () => {
-    setActiveFilters({ matiere: [], format: [], niveau: [] });
-    if (onFilterChange) onFilterChange({ matiere: [], format: [], niveau: [] });
+    setActiveFilters({ type: [], matiere: [], format: [], niveau: [] });
+    if (onFilterChange) onFilterChange({ type: [], matiere: [], format: [], niveau: [] });
   };
 
   const hasActiveFilters = Object.values(activeFilters).some(arr => arr.length > 0);
