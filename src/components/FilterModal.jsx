@@ -37,7 +37,7 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       title: "Je cherche",
       icon: User,
       options: [
-        { value: "professeur", label: "Professeur", icon: "👨‍🏫" },
+        { value: "professeur", label: "Professeur" },
         { value: "institut", label: "Institut", icon: "🏫" }
       ]
     },
@@ -67,9 +67,9 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       title: "Type de classe",
       icon: User,
       options: [
-        { value: "seul", label: "Individuel", icon: "👤" },
-        { value: "binome", label: "Binôme", icon: "👥" },
-        { value: "groupes", label: "Groupe", icon: "👨‍👩‍👧‍👦" }
+        { value: "seul", label: "Individuel" },
+        { value: "binome", label: "Binôme" },
+        { value: "groupes", label: "Groupe" }
       ]
     },
     {
@@ -97,10 +97,10 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       title: "Public",
       icon: User,
       options: [
-        { value: "enfants", label: "Enfants", icon: "🧒" },
-        { value: "ados", label: "Ados", icon: "👦" },
-        { value: "hommes", label: "Hommes", icon: "👨" },
-        { value: "femmes", label: "Femmes", icon: "👩" }
+        { value: "homme", label: "Homme" },
+        { value: "femme", label: "Femme" },
+        { value: "garcon", label: "Garçon" },
+        { value: "fille", label: "Fille" }
       ]
     }
   ];
@@ -169,7 +169,7 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
                             }`}
                           >
                             {/* Icon */}
-                            <span className="text-4xl">{option.icon}</span>
+                            {option.icon && <span className="text-4xl">{option.icon}</span>}
 
                             {/* Label */}
                             <span className={`font-semibold text-sm leading-tight ${isActive ? 'text-white' : 'text-gray-900'}`}>

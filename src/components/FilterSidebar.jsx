@@ -25,7 +25,7 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
       title: "Je cherche",
       icon: User,
       options: [
-        { value: "professeur", label: "Un professeur", icon: "👨‍🏫", description: "Cours particuliers" },
+        { value: "professeur", label: "Un professeur", description: "Cours particuliers" },
         { value: "institut", label: "Un institut", icon: "🏫", description: "Centre de formation" }
       ]
     },
@@ -55,9 +55,9 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
       title: "Type de classe",
       icon: User,
       options: [
-        { value: "seul", label: "Cours individuel", icon: "👤" },
-        { value: "binome", label: "En binôme", icon: "👥" },
-        { value: "groupes", label: "En groupe", icon: "👨‍👩‍👧‍👦" }
+        { value: "seul", label: "Cours individuel" },
+        { value: "binome", label: "En binôme" },
+        { value: "groupes", label: "En groupe" }
       ]
     },
     {
@@ -85,10 +85,10 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
       title: "Public",
       icon: User,
       options: [
-        { value: "enfants", label: "Enfants", icon: "🧒" },
-        { value: "ados", label: "Adolescents", icon: "👦" },
-        { value: "hommes", label: "Hommes", icon: "👨" },
-        { value: "femmes", label: "Femmes", icon: "👩" }
+        { value: "homme", label: "Homme" },
+        { value: "femme", label: "Femme" },
+        { value: "garcon", label: "Garçon" },
+        { value: "fille", label: "Fille" }
       ]
     }
   ];
@@ -143,7 +143,7 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
                       }`}
                     >
                       {/* Icon */}
-                      <span className="text-2xl flex-shrink-0">{option.icon}</span>
+                      {option.icon && <span className="text-2xl flex-shrink-0">{option.icon}</span>}
 
                       {/* Label */}
                       <div className="flex-1 min-w-0">
