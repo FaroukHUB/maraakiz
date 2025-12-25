@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 from typing import List, Optional
 from app.database import get_db
 from app.models.merkez import Merkez
@@ -18,35 +17,54 @@ def get_public_merkez(
     """
     Récupère la liste des professeurs/instituts avec filtres optionnels.
 
-    Filtres:
-    - type: professeur, institut
-    - matiere: coran, arabe, tajwid, sciences
-    - format: en-ligne, presentiel
-    - niveau: debutant, intermediaire, avance
+    Filtres intelligents :
+    - type: professeur, institut (OR entre eux)
+    - matiere: coran, arabe, tajwid, sciences (OR entre eux)
+    - format: en-ligne, presentiel (OR entre eux)
+    - niveau: debutant, intermediaire, avance (OR entre eux)
+
+    Logique GLOBALE :
+    (type_prof OR type_inst) AND (mat_coran OR mat_arabe) AND (fmt_ligne OR fmt_pres) etc.
     """
-    query = db.query(Merkez).filter(Merkez.actif == True)
+    # Récupérer tous les merkez actifs
+    all_merkez = db.query(Merkez).filter(Merkez.actif == True).all()
 
-    # Filtre par type (professeur OU institut) - OR
-    if type:
-        query = query.filter(Merkez.type.in_(type))
+    # Filtrer en Python (plus fiable que SQLAlchemy pour les JSON dans SQLite)
+    results = []
 
-    # Filtre par matière (au moins UNE des matières sélectionnées) - OR
-    if matiere:
-        matiere_filters = [Merkez.matieres.contains([mat]) for mat in matiere]
-        query = query.filter(or_(*matiere_filters))
+    for m in all_merkez:
+        # Filtre TYPE : si des types sont sélectionnés, le merkez doit en faire partie
+        if type and len(type) > 0:
+            if m.type not in type:
+                continue
 
-    # Filtre par format (au moins UN des formats sélectionnés) - OR
-    if format:
-        format_filters = [Merkez.formats.contains([fmt]) for fmt in format]
-        query = query.filter(or_(*format_filters))
+        # Filtre MATIÈRE : si des matières sont sélectionnées, le merkez doit en enseigner AU MOINS UNE
+        if matiere and len(matiere) > 0:
+            if not m.matieres:  # Pas de matières définies
+                continue
+            # Vérifier si au moins UNE matière sélectionnée est dans les matières du merkez
+            if not any(mat in m.matieres for mat in matiere):
+                continue
 
-    # Filtre par niveau (au moins UN des niveaux sélectionnés) - OR
-    if niveau:
-        niveau_filters = [Merkez.niveaux.contains([niv]) for niv in niveau]
-        query = query.filter(or_(*niveau_filters))
+        # Filtre FORMAT : si des formats sont sélectionnés, le merkez doit en proposer AU MOINS UN
+        if format and len(format) > 0:
+            if not m.formats:  # Pas de formats définis
+                continue
+            if not any(fmt in m.formats for fmt in format):
+                continue
+
+        # Filtre NIVEAU : si des niveaux sont sélectionnés, le merkez doit en accepter AU MOINS UN
+        if niveau and len(niveau) > 0:
+            if not m.niveaux:  # Pas de niveaux définis
+                continue
+            if not any(niv in m.niveaux for niv in niveau):
+                continue
+
+        # Si tous les filtres sont passés, on garde ce merkez
+        results.append(m)
 
     # Trier par note moyenne décroissante
-    results = query.order_by(Merkez.note_moyenne.desc()).all()
+    results.sort(key=lambda x: x.note_moyenne or 0, reverse=True)
 
     # Convertir en dict
     return [
