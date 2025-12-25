@@ -13,7 +13,10 @@ const HomePage = () => {
     type: [],
     matiere: [],
     format: [],
-    niveau: []
+    type_classe: [],
+    niveau: [],
+    langue: [],
+    public: []
   });
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [resultCount, setResultCount] = useState(0);

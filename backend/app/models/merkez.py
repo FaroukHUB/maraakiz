@@ -33,8 +33,11 @@ class Merkez(Base):
     # Matières enseignées (JSON array: ["coran", "arabe", "tajwid"])
     matieres = Column(JSON, default=list)
 
-    # Format de cours (JSON array: ["en-ligne", "presentiel"])
+    # Format de cours (JSON array: ["en-ligne", "presentiel", "en-differe"])
     formats = Column(JSON, default=list)
+
+    # Type de classe (JSON array: ["seul", "binome", "groupes"])
+    type_classe = Column(JSON, default=list)
 
     # Niveaux (JSON array: ["debutant", "intermediaire", "avance"])
     niveaux = Column(JSON, default=list)

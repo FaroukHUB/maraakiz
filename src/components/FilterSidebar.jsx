@@ -14,7 +14,7 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
   };
 
   const clearAll = () => {
-    onFilterChange({ type: [], matiere: [], format: [], niveau: [] });
+    onFilterChange({ type: [], matiere: [], format: [], type_classe: [], niveau: [], langue: [], public: [] });
   };
 
   const hasActiveFilters = Object.values(filters).some(arr => arr.length > 0);
@@ -46,7 +46,18 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
       icon: Monitor,
       options: [
         { value: "en-ligne", label: "En ligne", icon: "💻" },
-        { value: "presentiel", label: "Présentiel", icon: "🏢" }
+        { value: "presentiel", label: "Présentiel", icon: "🏢" },
+        { value: "en-differe", label: "En différé", icon: "📹" }
+      ]
+    },
+    {
+      id: "type_classe",
+      title: "Type de classe",
+      icon: User,
+      options: [
+        { value: "seul", label: "Cours individuel", icon: "👤" },
+        { value: "binome", label: "En binôme", icon: "👥" },
+        { value: "groupes", label: "En groupe", icon: "👨‍👩‍👧‍👦" }
       ]
     },
     {
@@ -57,6 +68,27 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
         { value: "debutant", label: "Débutant", icon: "🌱" },
         { value: "intermediaire", label: "Intermédiaire", icon: "🌿" },
         { value: "avance", label: "Avancé", icon: "🌳" }
+      ]
+    },
+    {
+      id: "langue",
+      title: "Langue d'enseignement",
+      icon: BookOpen,
+      options: [
+        { value: "francais", label: "Français", icon: "🇫🇷" },
+        { value: "arabe", label: "Arabe", icon: "🇸🇦" },
+        { value: "anglais", label: "Anglais", icon: "🇬🇧" }
+      ]
+    },
+    {
+      id: "public",
+      title: "Public",
+      icon: User,
+      options: [
+        { value: "enfants", label: "Enfants", icon: "🧒" },
+        { value: "ados", label: "Adolescents", icon: "👦" },
+        { value: "hommes", label: "Hommes", icon: "👨" },
+        { value: "femmes", label: "Femmes", icon: "👩" }
       ]
     }
   ];

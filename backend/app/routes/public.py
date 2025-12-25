@@ -11,7 +11,10 @@ def get_public_merkez(
     type: Optional[List[str]] = Query(None),
     matiere: Optional[List[str]] = Query(None),
     format: Optional[List[str]] = Query(None),
+    type_classe: Optional[List[str]] = Query(None),
     niveau: Optional[List[str]] = Query(None),
+    langue: Optional[List[str]] = Query(None),
+    public: Optional[List[str]] = Query(None),
     db: Session = Depends(get_db)
 ):
     """
@@ -20,8 +23,11 @@ def get_public_merkez(
     Filtres intelligents :
     - type: professeur, institut (OR entre eux)
     - matiere: coran, arabe, tajwid, sciences (OR entre eux)
-    - format: en-ligne, presentiel (OR entre eux)
+    - format: en-ligne, presentiel, en-differe (OR entre eux)
+    - type_classe: seul, binome, groupes (OR entre eux)
     - niveau: debutant, intermediaire, avance (OR entre eux)
+    - langue: francais, arabe, anglais (OR entre eux)
+    - public: enfants, ados, hommes, femmes (OR entre eux)
 
     Logique GLOBALE :
     (type_prof OR type_inst) AND (mat_coran OR mat_arabe) AND (fmt_ligne OR fmt_pres) etc.
@@ -53,11 +59,32 @@ def get_public_merkez(
             if not any(fmt in m.formats for fmt in format):
                 continue
 
+        # Filtre TYPE DE CLASSE : si des types de classe sont sélectionnés, le merkez doit en proposer AU MOINS UN
+        if type_classe and len(type_classe) > 0:
+            if not m.type_classe:  # Pas de types de classe définis
+                continue
+            if not any(tc in m.type_classe for tc in type_classe):
+                continue
+
         # Filtre NIVEAU : si des niveaux sont sélectionnés, le merkez doit en accepter AU MOINS UN
         if niveau and len(niveau) > 0:
             if not m.niveaux:  # Pas de niveaux définis
                 continue
             if not any(niv in m.niveaux for niv in niveau):
+                continue
+
+        # Filtre LANGUE : si des langues sont sélectionnées, le merkez doit en enseigner dans AU MOINS UNE
+        if langue and len(langue) > 0:
+            if not m.langues:  # Pas de langues définies
+                continue
+            if not any(lng in m.langues for lng in langue):
+                continue
+
+        # Filtre PUBLIC : si des publics sont sélectionnés, le merkez doit en accepter AU MOINS UN
+        if public and len(public) > 0:
+            if not m.public_cible:  # Pas de public défini
+                continue
+            if not any(pub in m.public_cible for pub in public):
                 continue
 
         # Si tous les filtres sont passés, on garde ce merkez

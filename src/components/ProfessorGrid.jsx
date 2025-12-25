@@ -24,8 +24,17 @@ const ProfessorGrid = ({ filters, onCountChange }) => {
         if (filters.format && filters.format.length > 0) {
           filters.format.forEach(f => params.append("format", f));
         }
+        if (filters.type_classe && filters.type_classe.length > 0) {
+          filters.type_classe.forEach(tc => params.append("type_classe", tc));
+        }
         if (filters.niveau && filters.niveau.length > 0) {
           filters.niveau.forEach(n => params.append("niveau", n));
+        }
+        if (filters.langue && filters.langue.length > 0) {
+          filters.langue.forEach(l => params.append("langue", l));
+        }
+        if (filters.public && filters.public.length > 0) {
+          filters.public.forEach(p => params.append("public", p));
         }
 
         const response = await axios.get(`${API_URL}/api/public/merkez?${params.toString()}`);

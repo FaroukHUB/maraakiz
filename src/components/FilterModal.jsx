@@ -26,7 +26,7 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
   };
 
   const clearAll = () => {
-    onFilterChange({ type: [], matiere: [], format: [], niveau: [] });
+    onFilterChange({ type: [], matiere: [], format: [], type_classe: [], niveau: [], langue: [], public: [] });
   };
 
   const hasActiveFilters = Object.values(filters).some(arr => arr.length > 0);
@@ -37,8 +37,8 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       title: "Je cherche",
       icon: User,
       options: [
-        { value: "professeur", label: "Un professeur", icon: "👨‍🏫" },
-        { value: "institut", label: "Un institut", icon: "🏫" }
+        { value: "professeur", label: "Professeur", icon: "👨‍🏫" },
+        { value: "institut", label: "Institut", icon: "🏫" }
       ]
     },
     {
@@ -49,7 +49,7 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
         { value: "coran", label: "Coran", icon: "📖" },
         { value: "arabe", label: "Arabe", icon: "✍️" },
         { value: "tajwid", label: "Tajwid", icon: "🎵" },
-        { value: "sciences", label: "Sciences religieuses", icon: "📚" }
+        { value: "sciences", label: "Sciences", icon: "📚" }
       ]
     },
     {
@@ -58,7 +58,18 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       icon: Monitor,
       options: [
         { value: "en-ligne", label: "En ligne", icon: "💻" },
-        { value: "presentiel", label: "Présentiel", icon: "🏢" }
+        { value: "presentiel", label: "Présentiel", icon: "🏢" },
+        { value: "en-differe", label: "En différé", icon: "📹" }
+      ]
+    },
+    {
+      id: "type_classe",
+      title: "Type de classe",
+      icon: User,
+      options: [
+        { value: "seul", label: "Individuel", icon: "👤" },
+        { value: "binome", label: "Binôme", icon: "👥" },
+        { value: "groupes", label: "Groupe", icon: "👨‍👩‍👧‍👦" }
       ]
     },
     {
@@ -69,6 +80,27 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
         { value: "debutant", label: "Débutant", icon: "🌱" },
         { value: "intermediaire", label: "Intermédiaire", icon: "🌿" },
         { value: "avance", label: "Avancé", icon: "🌳" }
+      ]
+    },
+    {
+      id: "langue",
+      title: "Langue",
+      icon: BookOpen,
+      options: [
+        { value: "francais", label: "Français", icon: "🇫🇷" },
+        { value: "arabe", label: "Arabe", icon: "🇸🇦" },
+        { value: "anglais", label: "Anglais", icon: "🇬🇧" }
+      ]
+    },
+    {
+      id: "public",
+      title: "Public",
+      icon: User,
+      options: [
+        { value: "enfants", label: "Enfants", icon: "🧒" },
+        { value: "ados", label: "Ados", icon: "👦" },
+        { value: "hommes", label: "Hommes", icon: "👨" },
+        { value: "femmes", label: "Femmes", icon: "👩" }
       ]
     }
   ];
