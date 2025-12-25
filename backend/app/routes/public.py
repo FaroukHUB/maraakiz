@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import List, Optional
 from app.database import get_db
 from app.models.merkez import Merkez
@@ -25,24 +26,24 @@ def get_public_merkez(
     """
     query = db.query(Merkez).filter(Merkez.actif == True)
 
-    # Filtre par type (professeur ou institut)
+    # Filtre par type (professeur OU institut) - OR
     if type:
         query = query.filter(Merkez.type.in_(type))
 
-    # Filtre par matière
+    # Filtre par matière (au moins UNE des matières sélectionnées) - OR
     if matiere:
-        for mat in matiere:
-            query = query.filter(Merkez.matieres.contains([mat]))
+        matiere_filters = [Merkez.matieres.contains([mat]) for mat in matiere]
+        query = query.filter(or_(*matiere_filters))
 
-    # Filtre par format
+    # Filtre par format (au moins UN des formats sélectionnés) - OR
     if format:
-        for fmt in format:
-            query = query.filter(Merkez.formats.contains([fmt]))
+        format_filters = [Merkez.formats.contains([fmt]) for fmt in format]
+        query = query.filter(or_(*format_filters))
 
-    # Filtre par niveau
+    # Filtre par niveau (au moins UN des niveaux sélectionnés) - OR
     if niveau:
-        for niv in niveau:
-            query = query.filter(Merkez.niveaux.contains([niv]))
+        niveau_filters = [Merkez.niveaux.contains([niv]) for niv in niveau]
+        query = query.filter(or_(*niveau_filters))
 
     # Trier par note moyenne décroissante
     results = query.order_by(Merkez.note_moyenne.desc()).all()
