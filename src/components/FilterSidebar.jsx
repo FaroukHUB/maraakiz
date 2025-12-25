@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Building2, BookOpen, Mosque, Sparkles, GraduationCap, Monitor, MapPin, Trophy, X } from "lucide-react";
+import { User, BookOpen, Monitor, Trophy, X } from "lucide-react";
 
 const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
 
