@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Search } from "lucide-react";
+import Header from "./Header";
 
 const HeroSearch = () => {
   const [matiere, setMatiere] = useState("");
@@ -11,7 +12,9 @@ const HeroSearch = () => {
   };
 
   return (
-    <section className="relative bg-gradient-to-br from-[#3D4C66] via-[#437C8B] to-[#3D4C66] text-white overflow-hidden">
+    <>
+      <Header />
+      <section className="relative bg-gradient-to-br from-[#3D4C66] via-[#437C8B] to-[#3D4C66] text-white overflow-hidden">
       {/* Pattern background */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0" style={{
@@ -19,7 +22,7 @@ const HeroSearch = () => {
         }}></div>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 sm:pt-24 sm:pb-20 lg:pt-28 lg:pb-24">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16 sm:pt-40 sm:pb-20 lg:pt-48 lg:pb-24">
         {/* Citation islamique */}
         <div className="text-center mb-8 sm:mb-10">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-4 leading-relaxed font-['Amiri'] max-w-4xl mx-auto">
@@ -104,6 +107,7 @@ const HeroSearch = () => {
         </div>
       </div>
     </section>
+    </>
   );
 };
 

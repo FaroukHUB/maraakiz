@@ -27,8 +27,6 @@ function App() {
 
   return (
     <div className="font-[Poppins]">
-      <Header />
-
       <Routes>
         {/* Landing page */}
         <Route
