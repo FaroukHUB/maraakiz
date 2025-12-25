@@ -15,6 +15,9 @@ const ProfessorGrid = ({ filters }) => {
         // Construire les query params à partir des filtres
         const params = new URLSearchParams();
 
+        if (filters.type && filters.type.length > 0) {
+          filters.type.forEach(t => params.append("type", t));
+        }
         if (filters.matiere && filters.matiere.length > 0) {
           filters.matiere.forEach(m => params.append("matiere", m));
         }
