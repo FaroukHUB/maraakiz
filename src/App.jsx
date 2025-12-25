@@ -1,15 +1,8 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 
-// Composants communs
-import Header from "./components/Header";
-
-// Sections de la nouvelle landing page
-import HeroSearch from "./components/HeroSearch";
-import FilterChips from "./components/FilterChips";
-import ProfessorGrid from "./components/ProfessorGrid";
-
 // Pages
+import HomePage from "./pages/HomePage";
 import Tarifs from "./pages/Tarifs";
 import Contact from "./pages/Contact";
 import Inscription from "./pages/Inscription";
@@ -19,27 +12,15 @@ import Eleves from "./pages/Eleves.jsx";
 import Eleve from "./pages/Eleve.jsx";
 import ProfProfile from "./pages/ProfProfile.jsx";
 
-
 import CRMLayout from "./layouts/CRMLayout";
 
 
 function App() {
-  const [filters, setFilters] = React.useState({});
-
   return (
     <div className="font-[Poppins]">
       <Routes>
         {/* Landing page */}
-        <Route
-          path="/"
-          element={
-            <>
-              <HeroSearch />
-              <FilterChips onFilterChange={setFilters} />
-              <ProfessorGrid filters={filters} />
-            </>
-          }
-        />
+        <Route path="/" element={<HomePage />} />
 
         {/* Autres pages */}
         <Route path="/prof/:id" element={<ProfProfile />} />
