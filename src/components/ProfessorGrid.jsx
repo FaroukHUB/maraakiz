@@ -1,72 +1,41 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import ProfessorCard from "./ProfessorCard";
 
-// Données mockées pour la démo
-const mockProfessors = [
-  {
-    id: 1,
-    nom: "Cheikh Ahmed Al-Mansouri",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=500&fit=crop",
-    note: 4.9,
-    nbAvis: 127,
-    matieres: ["Coran", "Tajwid"],
-    format: "En ligne",
-    langues: ["Français", "Arabe"],
-    niveaux: ["Tous niveaux"],
-    prix: 20,
-    verifie: true,
-    badges: {
-      nouveauProf: false,
-      premierCoursGratuit: true
-    }
-  },
-  {
-    id: 2,
-    nom: "Oum Khadija",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&h=500&fit=crop",
-    note: 5.0,
-    nbAvis: 89,
-    matieres: ["Arabe", "Sciences religieuses"],
-    format: "En ligne & Présentiel",
-    langues: ["Français", "Arabe"],
-    niveaux: ["Débutant", "Intermédiaire"],
-    prix: 18,
-    verifie: true,
-    badges: {
-      nouveauProf: false,
-      premierCoursGratuit: false
-    }
-  },
-  {
-    id: 3,
-    nom: "Ustadh Bilal Ibrahim",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&h=500&fit=crop",
-    note: 4.8,
-    nbAvis: 203,
-    matieres: ["Coran", "Arabe", "Tajwid"],
-    format: "En ligne",
-    langues: ["Français", "Arabe", "Anglais"],
-    niveaux: ["Tous niveaux"],
-    prix: 25,
-    verifie: true,
-    badges: {
-      nouveauProf: true,
-      premierCoursGratuit: true
-    }
-  }
-];
+const API_URL = "http://127.0.0.1:8000";
 
 const ProfessorGrid = ({ filters }) => {
   const [professors, setProfessors] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulation d'un chargement
-    setLoading(true);
-    setTimeout(() => {
-      setProfessors(mockProfessors);
-      setLoading(false);
-    }, 500);
+    const fetchProfessors = async () => {
+      setLoading(true);
+      try {
+        // Construire les query params à partir des filtres
+        const params = new URLSearchParams();
+
+        if (filters.matiere && filters.matiere.length > 0) {
+          filters.matiere.forEach(m => params.append("matiere", m));
+        }
+        if (filters.format && filters.format.length > 0) {
+          filters.format.forEach(f => params.append("format", f));
+        }
+        if (filters.niveau && filters.niveau.length > 0) {
+          filters.niveau.forEach(n => params.append("niveau", n));
+        }
+
+        const response = await axios.get(`${API_URL}/api/public/merkez?${params.toString()}`);
+        setProfessors(response.data);
+      } catch (error) {
+        console.error("Erreur chargement professeurs:", error);
+        setProfessors([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfessors();
   }, [filters]);
 
   return (

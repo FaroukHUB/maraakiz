@@ -1,0 +1,29 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.database import engine, Base
+from app.routes import public
+
+# Créer les tables
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Maraakiz API", version="1.0.0")
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En prod, restreindre aux domaines autorisés
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Routes
+app.include_router(public.router, prefix="/api/public", tags=["Public"])
+
+@app.get("/")
+def read_root():
+    return {"message": "Maraakiz API v1.0.0"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
