@@ -1,7 +1,10 @@
 import React from "react";
 import { Star, MapPin, Video, Clock, Shield, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ProfessorCard = ({ professor }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer">
       {/* Image */}
@@ -94,7 +97,10 @@ const ProfessorCard = ({ professor }) => {
               {professor.prix}€<span className="text-sm font-normal text-gray-500">/h</span>
             </div>
           </div>
-          <button className="bg-[#437C8B] hover:bg-[#35626f] text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-colors shadow-md hover:shadow-lg">
+          <button
+            onClick={() => navigate(`/prof/${professor.id}`)}
+            className="bg-[#437C8B] hover:bg-[#35626f] text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-colors shadow-md hover:shadow-lg"
+          >
             Voir profil
           </button>
         </div>

@@ -17,6 +17,7 @@ import AdminAddProfPage from "./pages/AdminAddProfPage";
 import CRM from "./pages/CRM.jsx";
 import Eleves from "./pages/Eleves.jsx";
 import Eleve from "./pages/Eleve.jsx";
+import ProfProfile from "./pages/ProfProfile.jsx";
 
 
 import CRMLayout from "./layouts/CRMLayout";
@@ -41,6 +42,7 @@ function App() {
         />
 
         {/* Autres pages */}
+        <Route path="/prof/:id" element={<ProfProfile />} />
         <Route path="/tarifs" element={<Tarifs />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/inscription" element={<Inscription />} />
