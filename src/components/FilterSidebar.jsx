@@ -25,7 +25,7 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
       title: "Je cherche",
       icon: User,
       options: [
-        { value: "professeur", label: "Un professeur", description: "Cours particuliers" },
+        { value: "professeur", label: "Un professeur", icon: "🎓", description: "Cours particuliers" },
         { value: "institut", label: "Un institut", icon: "🏫", description: "Centre de formation" }
       ]
     },
@@ -36,7 +36,7 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
       options: [
         { value: "coran", label: "Coran", icon: "📖" },
         { value: "arabe", label: "Arabe", icon: "✍️" },
-        { value: "tajwid", label: "Tajwid", icon: "🎵" },
+        { value: "tajwid", label: "Tajwid", icon: "📕" },
         { value: "sciences", label: "Sciences religieuses", icon: "📚" }
       ]
     },
@@ -55,9 +55,9 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
       title: "Type de classe",
       icon: User,
       options: [
-        { value: "seul", label: "Cours individuel" },
-        { value: "binome", label: "En binôme" },
-        { value: "groupes", label: "En groupe" }
+        { value: "seul", label: "Cours individuel", icon: "🎯" },
+        { value: "binome", label: "En binôme", icon: "📋" },
+        { value: "groupes", label: "En groupe", icon: "📚" }
       ]
     },
     {
@@ -85,10 +85,10 @@ const FilterSidebar = ({ filters, onFilterChange, resultCount }) => {
       title: "Public",
       icon: User,
       options: [
-        { value: "homme", label: "Homme" },
-        { value: "femme", label: "Femme" },
-        { value: "garcon", label: "Garçon" },
-        { value: "fille", label: "Fille" }
+        { value: "homme", label: "Homme", icon: "🔵" },
+        { value: "femme", label: "Femme", icon: "🟣" },
+        { value: "garcon", label: "Garçon", icon: "🔷" },
+        { value: "fille", label: "Fille", icon: "💜" }
       ]
     }
   ];

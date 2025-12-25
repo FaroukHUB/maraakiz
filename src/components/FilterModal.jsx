@@ -37,7 +37,7 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       title: "Je cherche",
       icon: User,
       options: [
-        { value: "professeur", label: "Professeur" },
+        { value: "professeur", label: "Professeur", icon: "🎓" },
         { value: "institut", label: "Institut", icon: "🏫" }
       ]
     },
@@ -48,7 +48,7 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       options: [
         { value: "coran", label: "Coran", icon: "📖" },
         { value: "arabe", label: "Arabe", icon: "✍️" },
-        { value: "tajwid", label: "Tajwid", icon: "🎵" },
+        { value: "tajwid", label: "Tajwid", icon: "📕" },
         { value: "sciences", label: "Sciences", icon: "📚" }
       ]
     },
@@ -67,9 +67,9 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       title: "Type de classe",
       icon: User,
       options: [
-        { value: "seul", label: "Individuel" },
-        { value: "binome", label: "Binôme" },
-        { value: "groupes", label: "Groupe" }
+        { value: "seul", label: "Individuel", icon: "🎯" },
+        { value: "binome", label: "Binôme", icon: "📋" },
+        { value: "groupes", label: "Groupe", icon: "📚" }
       ]
     },
     {
@@ -97,10 +97,10 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       title: "Public",
       icon: User,
       options: [
-        { value: "homme", label: "Homme" },
-        { value: "femme", label: "Femme" },
-        { value: "garcon", label: "Garçon" },
-        { value: "fille", label: "Fille" }
+        { value: "homme", label: "Homme", icon: "🔵" },
+        { value: "femme", label: "Femme", icon: "🟣" },
+        { value: "garcon", label: "Garçon", icon: "🔷" },
+        { value: "fille", label: "Fille", icon: "💜" }
       ]
     }
   ];
