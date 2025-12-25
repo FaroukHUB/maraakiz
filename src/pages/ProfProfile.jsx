@@ -107,13 +107,6 @@ const ProfProfile = () => {
                     <span className="text-gray-600">({prof.nombreAvis} avis)</span>
                   </div>
 
-                  {/* Localisation */}
-                  {prof.ville && (
-                    <div className="flex items-center gap-2 text-gray-600 mb-4">
-                      <MapPin size={18} />
-                      <span>{prof.ville}, {prof.pays}</span>
-                    </div>
-                  )}
 
                   {/* Prix */}
                   <div className="bg-[#437C8B]/10 rounded-xl p-4 mb-4">
@@ -170,12 +163,12 @@ const ProfProfile = () => {
 
             {/* Colonne droite - Détails */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Bio */}
-              {prof.bio && (
+              {/* Cursus */}
+              {prof.cursus && (
                 <div className="bg-white rounded-2xl shadow-md p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">À propos</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Cursus</h2>
                   <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                    {prof.bio}
+                    {prof.cursus}
                   </p>
                 </div>
               )}
@@ -194,6 +187,36 @@ const ProfProfile = () => {
                       </span>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Programme enseigné */}
+              {prof.programme && (
+                <div className="bg-white rounded-2xl shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Programme enseigné</h2>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                    {prof.programme}
+                  </p>
+                </div>
+              )}
+
+              {/* Livres et supports utilisés */}
+              {prof.livres && (
+                <div className="bg-white rounded-2xl shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Livres et supports utilisés</h2>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                    {prof.livres}
+                  </p>
+                </div>
+              )}
+
+              {/* Méthodologie */}
+              {prof.methodologie && (
+                <div className="bg-white rounded-2xl shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Méthodologie</h2>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                    {prof.methodologie}
+                  </p>
                 </div>
               )}
 

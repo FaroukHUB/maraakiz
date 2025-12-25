@@ -11,7 +11,11 @@ class Merkez(Base):
     telephone = Column(String(50))
 
     # Informations professionnelles
-    bio = Column(Text)
+    bio = Column(Text)  # Deprecated - use cursus instead
+    cursus = Column(Text)  # Parcours académique et professionnel
+    programme = Column(Text)  # Programme enseigné
+    livres = Column(Text)  # Livres et supports utilisés
+    methodologie = Column(Text)  # Méthodologie pédagogique
     presentation_video_url = Column(String(500))
     image_url = Column(String(500))
 
