@@ -4,7 +4,7 @@ import ProfessorCard from "./ProfessorCard";
 
 const API_URL = "http://127.0.0.1:8000";
 
-const ProfessorGrid = ({ filters }) => {
+const ProfessorGrid = ({ filters, onCountChange }) => {
   const [professors, setProfessors] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,16 +30,24 @@ const ProfessorGrid = ({ filters }) => {
 
         const response = await axios.get(`${API_URL}/api/public/merkez?${params.toString()}`);
         setProfessors(response.data);
+
+        // Notifier le parent du nombre de résultats
+        if (onCountChange) {
+          onCountChange(response.data.length);
+        }
       } catch (error) {
         console.error("Erreur chargement professeurs:", error);
         setProfessors([]);
+        if (onCountChange) {
+          onCountChange(0);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfessors();
-  }, [filters]);
+  }, [filters, onCountChange]);
 
   return (
     <div className="bg-gray-50 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">

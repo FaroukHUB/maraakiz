@@ -18,27 +18,6 @@ const HomePage = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [resultCount, setResultCount] = useState(0);
 
-  // Compter les résultats en temps réel
-  useEffect(() => {
-    const fetchCount = async () => {
-      try {
-        const params = new URLSearchParams();
-        if (filters.type?.length > 0) filters.type.forEach(t => params.append("type", t));
-        if (filters.matiere?.length > 0) filters.matiere.forEach(m => params.append("matiere", m));
-        if (filters.format?.length > 0) filters.format.forEach(f => params.append("format", f));
-        if (filters.niveau?.length > 0) filters.niveau.forEach(n => params.append("niveau", n));
-
-        const response = await axios.get(`${API_URL}/api/public/merkez?${params.toString()}`);
-        setResultCount(response.data.length);
-      } catch (error) {
-        console.error("Erreur comptage:", error);
-        setResultCount(0);
-      }
-    };
-
-    fetchCount();
-  }, [filters]);
-
   const hasActiveFilters = Object.values(filters).some(arr => arr.length > 0);
 
   return (
@@ -61,7 +40,7 @@ const HomePage = () => {
 
           {/* Grille Professeurs */}
           <div className="lg:col-span-3">
-            <ProfessorGrid filters={filters} />
+            <ProfessorGrid filters={filters} onCountChange={setResultCount} />
           </div>
         </div>
       </div>
