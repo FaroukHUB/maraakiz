@@ -27,9 +27,13 @@ const PublicMerkezGrid = () => {
     });
 
     axios
-      .get(`http://localhost:8001/public/merkez?${queryParams.toString()}`)
+      .get(`http://127.0.0.1:8000/api/public/merkez?${queryParams.toString()}`)
       .then((res) => {
         setData(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Erreur chargement merkez:", err);
         setLoading(false);
       });
   }, [filters]);
