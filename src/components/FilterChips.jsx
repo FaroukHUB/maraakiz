@@ -3,27 +3,41 @@ import { SlidersHorizontal, X } from "lucide-react";
 
 const FilterChips = ({ onFilterChange }) => {
   const [activeFilters, setActiveFilters] = useState({
+    matiere: [],
+    format: [],
+    mode: [],
     niveau: [],
-    langue: [],
-    prix: []
+    public: []
   });
   const [showAllFilters, setShowAllFilters] = useState(false);
 
   const filterOptions = {
+    matiere: [
+      { value: "coran", label: "Coran" },
+      { value: "arabe", label: "Arabe" },
+      { value: "tajwid", label: "Tajwid" },
+      { value: "sciences", label: "Sciences religieuses" }
+    ],
+    format: [
+      { value: "individuel", label: "Individuel" },
+      { value: "binome", label: "Binôme" },
+      { value: "groupe", label: "Groupe" }
+    ],
+    mode: [
+      { value: "en-ligne", label: "En ligne" },
+      { value: "presentiel", label: "Présentiel" },
+      { value: "differe", label: "En différé" }
+    ],
     niveau: [
       { value: "debutant", label: "Débutant" },
       { value: "intermediaire", label: "Intermédiaire" },
       { value: "avance", label: "Avancé" }
     ],
-    langue: [
-      { value: "francais", label: "Français" },
-      { value: "arabe", label: "Arabe" },
-      { value: "anglais", label: "Anglais" }
-    ],
-    prix: [
-      { value: "budget", label: "< 15€/h" },
-      { value: "standard", label: "15-25€/h" },
-      { value: "premium", label: "> 25€/h" }
+    public: [
+      { value: "enfants", label: "Enfants" },
+      { value: "ados", label: "Adolescents" },
+      { value: "hommes", label: "Hommes" },
+      { value: "femmes", label: "Femmes" }
     ]
   };
 
@@ -42,8 +56,8 @@ const FilterChips = ({ onFilterChange }) => {
   };
 
   const clearAllFilters = () => {
-    setActiveFilters({ niveau: [], langue: [], prix: [] });
-    if (onFilterChange) onFilterChange({ niveau: [], langue: [], prix: [] });
+    setActiveFilters({ matiere: [], format: [], mode: [], niveau: [], public: [] });
+    if (onFilterChange) onFilterChange({ matiere: [], format: [], mode: [], niveau: [], public: [] });
   };
 
   const hasActiveFilters = Object.values(activeFilters).some(arr => arr.length > 0);

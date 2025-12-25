@@ -19,7 +19,7 @@ const HeroSearch = () => {
         }}></div>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
         {/* Citation islamique */}
         <div className="text-center mb-8 sm:mb-10">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-4 leading-relaxed font-['Amiri'] max-w-4xl mx-auto">
