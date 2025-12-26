@@ -7,7 +7,10 @@ from datetime import datetime, date
 from app.database import get_db
 from app.models.eleve import Eleve
 from app.models.user import User
-from app.routes.auth import oauth2_scheme
+from app.models.merkez import Merkez
+from app.routes.auth import oauth2_scheme, get_password_hash
+from app.utils.password import generate_simple_temp_password
+from app.utils.email import send_student_credentials_email
 from jose import JWTError, jwt
 import os
 
@@ -93,6 +96,15 @@ class EleveResponse(BaseModel):
         from_attributes = True
 
 
+class EleveCreateResponse(BaseModel):
+    """Response when creating a new student - includes credentials"""
+    eleve: EleveResponse
+    user_created: bool
+    email: Optional[str] = None
+    temp_password: Optional[str] = None
+    message: str
+
+
 # Dependency to get current user
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -138,14 +150,14 @@ async def get_eleves(
     return eleves
 
 
-@router.post("/", response_model=EleveResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=EleveCreateResponse, status_code=status.HTTP_201_CREATED)
 async def create_eleve(
     eleve_data: EleveCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Create a new eleve
+    Create a new eleve and optionally create a User account for them
     """
     if not current_user.merkez_id:
         raise HTTPException(
@@ -153,6 +165,7 @@ async def create_eleve(
             detail="Vous devez être professeur ou institut pour ajouter des élèves"
         )
 
+    # Create the eleve record
     new_eleve = Eleve(
         merkez_id=current_user.merkez_id,
         **eleve_data.model_dump()
@@ -162,7 +175,37 @@ async def create_eleve(
     db.commit()
     db.refresh(new_eleve)
 
-    return new_eleve
+    # If email is provided, create a User account for the student
+    user_created = False
+    temp_password = None
+
+    if eleve_data.email:
+        # Check if user already exists with this email
+        existing_user = db.query(User).filter(User.email == eleve_data.email).first()
+
+        if not existing_user:
+            # Generate temporary password
+            temp_password = generate_simple_temp_password()
+
+            # Create user account
+            new_user = User(
+                email=eleve_data.email,
+                hashed_password=get_password_hash(temp_password),
+                full_name=f"{eleve_data.prenom} {eleve_data.nom}",
+                user_type="eleve"
+            )
+
+            db.add(new_user)
+            db.commit()
+            user_created = True
+
+    return EleveCreateResponse(
+        eleve=new_eleve,
+        user_created=user_created,
+        email=eleve_data.email if user_created else None,
+        temp_password=temp_password,
+        message="Élève créé avec succès" + (" et compte utilisateur créé" if user_created else "")
+    )
 
 
 @router.get("/{eleve_id}", response_model=EleveResponse)
@@ -262,3 +305,52 @@ async def delete_eleve(
     db.commit()
 
     return None
+
+
+class SendCredentialsRequest(BaseModel):
+    email: str
+    temp_password: str
+    student_firstname: str
+    student_lastname: str
+
+
+@router.post("/send-credentials-email", status_code=status.HTTP_200_OK)
+async def send_credentials_email(
+    data: SendCredentialsRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Send student credentials via email
+    """
+    if not current_user.merkez_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous devez être professeur ou institut"
+        )
+
+    # Get professor/institute name
+    merkez = db.query(Merkez).filter(Merkez.id == current_user.merkez_id).first()
+    professor_name = merkez.nom if merkez else current_user.full_name
+
+    # Send email
+    success = send_student_credentials_email(
+        student_email=data.email,
+        student_firstname=data.student_firstname,
+        student_lastname=data.student_lastname,
+        professor_name=professor_name,
+        temp_password=data.temp_password,
+        login_url="http://localhost:5174/login"  # TODO: Use environment variable
+    )
+
+    if not success:
+        # Email sending failed (Gmail not configured), but don't raise error
+        return {
+            "success": False,
+            "message": "Configuration email non disponible. Transmettez les identifiants manuellement à l'élève."
+        }
+
+    return {
+        "success": True,
+        "message": f"Email envoyé avec succès à {data.email}"
+    }
