@@ -11,6 +11,7 @@ import DashboardEleves from "./pages/DashboardEleves";
 import DashboardEleveForm from "./pages/DashboardEleveForm";
 import DashboardEleveDetail from "./pages/DashboardEleveDetail";
 import DashboardProfil from "./pages/DashboardProfil";
+import DashboardCalendrier from "./pages/DashboardCalendrier";
 import Tarifs from "./pages/Tarifs";
 import Contact from "./pages/Contact";
 import Inscription from "./pages/Inscription";
@@ -41,6 +42,7 @@ function App() {
         <Route path="/dashboard/eleves/:id" element={<DashboardEleveDetail />} />
         <Route path="/dashboard/eleves/:id/modifier" element={<DashboardEleveForm />} />
         <Route path="/dashboard/profil" element={<DashboardProfil />} />
+        <Route path="/dashboard/calendrier" element={<DashboardCalendrier />} />
 
         {/* Autres pages */}
         <Route path="/merkez/:id" element={<MerkezDetail />} />
