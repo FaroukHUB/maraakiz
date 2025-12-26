@@ -42,6 +42,17 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       ]
     },
     {
+      id: "public",
+      title: "Public",
+      icon: User,
+      options: [
+        { value: "homme", label: "Homme", icon: "🔵" },
+        { value: "femme", label: "Femme", icon: "🟣" },
+        { value: "garcon", label: "Garçon", icon: "🔷" },
+        { value: "fille", label: "Fille", icon: "💜" }
+      ]
+    },
+    {
       id: "matiere",
       title: "Matière",
       icon: BookOpen,
@@ -73,16 +84,6 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       ]
     },
     {
-      id: "niveau",
-      title: "Niveau",
-      icon: Trophy,
-      options: [
-        { value: "debutant", label: "Débutant", icon: "🌱" },
-        { value: "intermediaire", label: "Intermédiaire", icon: "🌿" },
-        { value: "avance", label: "Avancé", icon: "🌳" }
-      ]
-    },
-    {
       id: "langue",
       title: "Langue",
       icon: BookOpen,
@@ -93,14 +94,13 @@ const FilterModal = ({ isOpen, onClose, filters, onFilterChange, resultCount }) 
       ]
     },
     {
-      id: "public",
-      title: "Public",
-      icon: User,
+      id: "niveau",
+      title: "Niveau",
+      icon: Trophy,
       options: [
-        { value: "homme", label: "Homme", icon: "🔵" },
-        { value: "femme", label: "Femme", icon: "🟣" },
-        { value: "garcon", label: "Garçon", icon: "🔷" },
-        { value: "fille", label: "Fille", icon: "💜" }
+        { value: "debutant", label: "Débutant", icon: "🌱" },
+        { value: "intermediaire", label: "Intermédiaire", icon: "🌿" },
+        { value: "avance", label: "Avancé", icon: "🌳" }
       ]
     }
   ];
