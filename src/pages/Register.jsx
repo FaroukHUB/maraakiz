@@ -35,7 +35,8 @@ const Register = () => {
     setError("");
 
     // Validations
-    if (!formData.accepteCharte) {
+    // Charte obligatoire uniquement pour professeurs et instituts
+    if ((formData.type === "professeur" || formData.type === "institut") && !formData.accepteCharte) {
       setError("Vous devez accepter la charte pour vous inscrire");
       return;
     }
@@ -240,30 +241,32 @@ const Register = () => {
               </div>
             </div>
 
-            {/* CHARTE OBLIGATOIRE - EN ROUGE ET EN GROS */}
-            <div className="bg-red-50 border-4 border-red-500 rounded-2xl p-6">
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="accepteCharte"
-                  name="accepteCharte"
-                  checked={formData.accepteCharte}
-                  onChange={handleChange}
-                  className="mt-1 w-6 h-6 text-red-600 border-red-300 rounded focus:ring-red-500 cursor-pointer"
-                />
-                <label htmlFor="accepteCharte" className="flex-1 cursor-pointer">
-                  <span className="block text-lg font-bold text-red-700 mb-2">
-                    ⚠️ CONDITION OBLIGATOIRE
-                  </span>
-                  <span className="block text-base font-semibold text-red-900">
-                    Je certifie suivre le Coran et la Sunna selon la compréhension des pieux prédécesseurs
-                  </span>
-                  <span className="block text-sm text-red-600 mt-2">
-                    * Maraakiz se réserve le droit de supprimer tout compte ne respectant pas cette condition
-                  </span>
-                </label>
+            {/* CHARTE OBLIGATOIRE - EN ROUGE ET EN GROS (Professeurs et Instituts uniquement) */}
+            {(formData.type === "professeur" || formData.type === "institut") && (
+              <div className="bg-red-50 border-4 border-red-500 rounded-2xl p-6">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="accepteCharte"
+                    name="accepteCharte"
+                    checked={formData.accepteCharte}
+                    onChange={handleChange}
+                    className="mt-1 w-6 h-6 text-red-600 border-red-300 rounded focus:ring-red-500 cursor-pointer"
+                  />
+                  <label htmlFor="accepteCharte" className="flex-1 cursor-pointer">
+                    <span className="block text-lg font-bold text-red-700 mb-2">
+                      ⚠️ CONDITION OBLIGATOIRE
+                    </span>
+                    <span className="block text-base font-semibold text-red-900">
+                      Je certifie suivre le Coran et la Sunna selon la compréhension des pieux prédécesseurs
+                    </span>
+                    <span className="block text-sm text-red-600 mt-2">
+                      * Maraakiz se réserve le droit de supprimer tout compte ne respectant pas cette condition
+                    </span>
+                  </label>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Message d'erreur */}
             {error && (
