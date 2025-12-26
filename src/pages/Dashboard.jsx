@@ -46,7 +46,7 @@ const Dashboard = () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
 
-      if (userData.type === "prof") {
+      if (userData.type === "prof" || userData.type === "professeur") {
         // Fetch students count
         const elevesRes = await axios.get(`${API_URL}/api/eleves`, { headers });
         const elevesCount = elevesRes.data.length;
@@ -205,7 +205,7 @@ const Dashboard = () => {
         </div>
 
         {/* Payment alerts for professors */}
-        {user?.type === "prof" && stats?.latePaymentsCount > 0 && (
+        {(user?.type === "prof" || user?.type === "professeur") && stats?.latePaymentsCount > 0 && (
           <div className="bg-red-50 border-l-4 border-red-500 rounded-2xl p-6 shadow-sm">
             <div className="flex items-start">
               <AlertCircle className="text-red-500 mt-1 mr-3" size={24} />
