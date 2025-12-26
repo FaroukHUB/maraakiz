@@ -4,6 +4,8 @@ import { Routes, Route } from "react-router-dom";
 // Pages
 import HomePage from "./pages/HomePage";
 import MerkezDetail from "./pages/MerkezDetail";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
 import Tarifs from "./pages/Tarifs";
 import Contact from "./pages/Contact";
 import Inscription from "./pages/Inscription";
@@ -22,6 +24,10 @@ function App() {
       <Routes>
         {/* Landing page */}
         <Route path="/" element={<HomePage />} />
+
+        {/* Auth */}
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
 
         {/* Autres pages */}
         <Route path="/merkez/:id" element={<MerkezDetail />} />
