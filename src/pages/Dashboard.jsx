@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
+import axios from "axios";
 import {
   Users,
   BookOpen,
@@ -9,13 +10,22 @@ import {
   MessageSquare,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  DollarSign,
+  FileText,
+  Award
 } from "lucide-react";
+
+const API_URL = "http://localhost:8000";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(null);
+  const [paymentStats, setPaymentStats] = useState(null);
+  const [recentNotes, setRecentNotes] = useState([]);
+  const [studentPayments, setStudentPayments] = useState([]);
 
   useEffect(() => {
     // Check if user is logged in
@@ -27,9 +37,52 @@ const Dashboard = () => {
       return;
     }
 
-    setUser(JSON.parse(storedUser));
-    setLoading(false);
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+    fetchDashboardData(parsedUser, token);
   }, [navigate]);
+
+  const fetchDashboardData = async (userData, token) => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+
+      if (userData.type === "prof") {
+        // Fetch students count
+        const elevesRes = await axios.get(`${API_URL}/api/eleves`, { headers });
+        const elevesCount = elevesRes.data.length;
+
+        // Fetch courses count
+        const coursRes = await axios.get(`${API_URL}/api/cours`, { headers });
+        const coursCount = coursRes.data.length;
+
+        // Fetch payment stats
+        const paymentRes = await axios.get(`${API_URL}/api/paiements/stats/overview`, { headers });
+        setPaymentStats(paymentRes.data);
+
+        // Fetch students with late payments
+        const latePaymentsRes = await axios.get(`${API_URL}/api/paiements?statut=en_retard`, { headers });
+
+        setStats({
+          elevesCount,
+          coursCount,
+          latePaymentsCount: latePaymentsRes.data.length
+        });
+      } else if (userData.type === "eleve") {
+        // Fetch student's course notes
+        const notesRes = await axios.get(`${API_URL}/api/notes-cours/eleve/${userData.id}`, { headers });
+        setRecentNotes(notesRes.data.slice(0, 3)); // Last 3 notes
+
+        // Fetch student's payments
+        const paymentsRes = await axios.get(`${API_URL}/api/paiements/student/${userData.id}`, { headers });
+        setStudentPayments(paymentsRes.data);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -43,67 +96,72 @@ const Dashboard = () => {
   const professorStats = [
     {
       title: "Élèves actifs",
-      value: "0",
+      value: stats?.elevesCount || "0",
       icon: Users,
       color: "bg-blue-500",
-      description: "Aucun élève pour le moment"
+      description: stats?.elevesCount > 0 ? "Élèves inscrits" : "Aucun élève pour le moment"
     },
     {
       title: "Cours donnés",
-      value: "0",
+      value: stats?.coursCount || "0",
       icon: BookOpen,
       color: "bg-green-500",
       description: "Total de cours"
     },
     {
-      title: "Prochains cours",
-      value: "0",
-      icon: Calendar,
-      color: "bg-purple-500",
-      description: "Cette semaine"
+      title: "Total à recevoir",
+      value: paymentStats ? `${(paymentStats.total_restant || 0).toFixed(0)} €` : "0 €",
+      icon: DollarSign,
+      color: "bg-emerald-500",
+      description: "Paiements en attente"
     },
     {
-      title: "Messages",
-      value: "0",
-      icon: MessageSquare,
-      color: "bg-orange-500",
-      description: "Non lus"
+      title: "Paiements en retard",
+      value: stats?.latePaymentsCount || "0",
+      icon: AlertCircle,
+      color: stats?.latePaymentsCount > 0 ? "bg-red-500" : "bg-orange-500",
+      description: stats?.latePaymentsCount > 0 ? "Élèves en retard" : "Tous à jour"
     }
   ];
 
   // Stats for students
+  const unpaidPayments = studentPayments?.filter(p => p.statut === "impaye" || p.statut === "en_retard") || [];
+  const totalDue = unpaidPayments.reduce((sum, p) => sum + (p.montant_du - p.montant_paye), 0);
+
   const studentStats = [
     {
-      title: "Mes professeurs",
-      value: "0",
-      icon: Users,
+      title: "Notes de cours",
+      value: recentNotes?.length || "0",
+      icon: FileText,
       color: "bg-blue-500",
-      description: "Professeurs actifs"
+      description: "Résumés disponibles"
     },
     {
-      title: "Cours suivis",
-      value: "0",
-      icon: BookOpen,
+      title: "Progression",
+      value: recentNotes?.length > 0 && recentNotes[0]?.progression_pourcentage
+        ? `${recentNotes[0].progression_pourcentage}%`
+        : "N/A",
+      icon: Award,
       color: "bg-green-500",
-      description: "Total de cours"
+      description: "Dernier cours"
     },
     {
-      title: "Prochains cours",
-      value: "0",
-      icon: Calendar,
-      color: "bg-purple-500",
-      description: "Cette semaine"
+      title: "Paiements dus",
+      value: `${totalDue.toFixed(0)} €`,
+      icon: DollarSign,
+      color: totalDue > 0 ? "bg-orange-500" : "bg-emerald-500",
+      description: totalDue > 0 ? "À régler" : "Tous payés"
     },
     {
       title: "Messages",
       value: "0",
       icon: MessageSquare,
-      color: "bg-orange-500",
+      color: "bg-purple-500",
       description: "Non lus"
     }
   ];
 
-  const stats = user?.type === "eleve" ? studentStats : professorStats;
+  const dashboardStats = user?.type === "eleve" ? studentStats : professorStats;
 
   return (
     <DashboardLayout>
@@ -122,7 +180,7 @@ const Dashboard = () => {
 
         {/* Stats grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => {
+          {dashboardStats.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <div
@@ -145,6 +203,78 @@ const Dashboard = () => {
             );
           })}
         </div>
+
+        {/* Payment alerts for professors */}
+        {user?.type === "prof" && stats?.latePaymentsCount > 0 && (
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-start">
+              <AlertCircle className="text-red-500 mt-1 mr-3" size={24} />
+              <div>
+                <h3 className="text-lg font-bold text-red-900 mb-2">
+                  ⚠️ Paiements en retard
+                </h3>
+                <p className="text-red-700">
+                  Vous avez <strong>{stats.latePaymentsCount} élève(s)</strong> avec des paiements en retard.
+                </p>
+                <button
+                  onClick={() => navigate("/dashboard/eleves")}
+                  className="mt-3 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Voir les détails
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Recent course notes for students */}
+        {user?.type === "eleve" && recentNotes?.length > 0 && (
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              📚 Mes derniers cours
+            </h2>
+            <div className="space-y-4">
+              {recentNotes.map((note) => (
+                <div key={note.id} className="border-l-4 border-[#437C8B] bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-gray-900">
+                      Cours du {new Date(note.created_at).toLocaleDateString('fr-FR')}
+                    </h3>
+                    {note.note && (
+                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                        {note.note}
+                      </span>
+                    )}
+                  </div>
+                  {note.resume && (
+                    <p className="text-gray-700 mb-2">
+                      <strong>Résumé :</strong> {note.resume}
+                    </p>
+                  )}
+                  {note.devoirs && (
+                    <p className="text-orange-700">
+                      <strong>📝 Devoirs :</strong> {note.devoirs}
+                    </p>
+                  )}
+                  {note.progression_pourcentage && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+                        <span>Progression</span>
+                        <span className="font-semibold">{note.progression_pourcentage}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-[#437C8B] h-2 rounded-full transition-all"
+                          style={{ width: `${note.progression_pourcentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Quick actions */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

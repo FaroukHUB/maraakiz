@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
+import NotesCoursModal from "../components/NotesCoursModal";
 import axios from "axios";
 import {
   Plus,
@@ -17,7 +18,8 @@ import {
   XCircle,
   AlertCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FileText
 } from "lucide-react";
 
 const API_URL = "http://127.0.0.1:8000";
@@ -31,6 +33,8 @@ const DashboardCalendrier = () => {
   const [editingCours, setEditingCours] = useState(null);
   const [error, setError] = useState("");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [selectedCoursForNotes, setSelectedCoursForNotes] = useState(null);
 
   const [formData, setFormData] = useState({
     eleve_id: "",
@@ -265,6 +269,20 @@ const DashboardCalendrier = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + delta, 1));
   };
 
+  const handleOpenNotesModal = (cours) => {
+    setSelectedCoursForNotes(cours);
+    setShowNotesModal(true);
+  };
+
+  const handleCloseNotesModal = () => {
+    setShowNotesModal(false);
+    setSelectedCoursForNotes(null);
+  };
+
+  const handleNotesSuccess = () => {
+    fetchCours();
+  };
+
   const groupedCours = cours.reduce((acc, c) => {
     const date = new Date(c.date_debut).toLocaleDateString("fr-FR");
     if (!acc[date]) acc[date] = [];
@@ -405,6 +423,15 @@ const DashboardCalendrier = () => {
                                 <XCircle size={20} />
                               </button>
                             </>
+                          )}
+                          {c.statut === "termine" && (
+                            <button
+                              onClick={() => handleOpenNotesModal(c)}
+                              className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              title="Ajouter des notes de cours"
+                            >
+                              <FileText size={20} />
+                            </button>
                           )}
                           <button
                             onClick={() => handleOpenModal(c)}
@@ -627,6 +654,15 @@ const DashboardCalendrier = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Notes Modal */}
+      {showNotesModal && selectedCoursForNotes && (
+        <NotesCoursModal
+          cours={selectedCoursForNotes}
+          onClose={handleCloseNotesModal}
+          onSuccess={handleNotesSuccess}
+        />
       )}
     </DashboardLayout>
   );
