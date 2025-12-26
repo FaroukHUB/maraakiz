@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import MerkezDetail from "./pages/MerkezDetail";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 import Tarifs from "./pages/Tarifs";
 import Contact from "./pages/Contact";
 import Inscription from "./pages/Inscription";
@@ -28,6 +29,9 @@ function App() {
         {/* Auth */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+
+        {/* Dashboard */}
+        <Route path="/dashboard" element={<Dashboard />} />
 
         {/* Autres pages */}
         <Route path="/merkez/:id" element={<MerkezDetail />} />
