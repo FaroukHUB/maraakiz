@@ -305,48 +305,36 @@ async def get_available_contacts(
     """
     contacts = []
 
-    if current_user.user_type in ["professeur", "institut"]:
+    if current_user.user_type == "prof":
         # Get all students of this professor/institute
         eleves = db.query(Eleve).filter(
-            Eleve.merkez_id == current_user.id
+            Eleve.merkez_id == current_user.merkez_id
         ).all()
 
         for eleve in eleves:
             contacts.append({
                 "id": eleve.id,
                 "nom": f"{eleve.prenom} {eleve.nom}",
-                "email": eleve.email,
+                "email": eleve.email or "Non renseigné",
                 "type": "eleve"
             })
 
     elif current_user.user_type == "eleve":
-        # Get all professors/institutes
-        # First, find the eleve record
-        eleve = db.query(Eleve).filter(Eleve.user_id == current_user.id).first()
-
-        if eleve and eleve.merkez_id:
-            # Get the merkez (professor/institute)
-            merkez_user = db.query(User).filter(User.id == eleve.merkez_id).first()
-            if merkez_user:
-                contacts.append({
-                    "id": merkez_user.id,
-                    "nom": merkez_user.full_name or merkez_user.email,
-                    "email": merkez_user.email,
-                    "type": merkez_user.user_type
-                })
-
-        # Also get other professors/institutes (for demo purposes)
+        # Get all professors/institutes (students can message any professor)
         all_merkezes = db.query(User).filter(
-            User.user_type.in_(["professeur", "institut"])
+            User.user_type == "prof",
+            User.merkez_id.isnot(None)  # Only users with a merkez
         ).all()
 
-        for merkez in all_merkezes:
-            if not any(c["id"] == merkez.id for c in contacts):
+        for merkez_user in all_merkezes:
+            # Get the merkez to determine if professeur or institut
+            merkez = db.query(Merkez).filter(Merkez.id == merkez_user.merkez_id).first()
+            if merkez:
                 contacts.append({
-                    "id": merkez.id,
-                    "nom": merkez.full_name or merkez.email,
+                    "id": merkez_user.id,
+                    "nom": merkez.nom,
                     "email": merkez.email,
-                    "type": merkez.user_type
+                    "type": merkez.type  # "professeur" or "institut"
                 })
 
     return contacts
