@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 
 // Pages
 import HomePage from "./pages/HomePage";
+import MerkezDetail from "./pages/MerkezDetail";
 import Tarifs from "./pages/Tarifs";
 import Contact from "./pages/Contact";
 import Inscription from "./pages/Inscription";
@@ -23,6 +24,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
 
         {/* Autres pages */}
+        <Route path="/merkez/:id" element={<MerkezDetail />} />
         <Route path="/prof/:id" element={<ProfProfile />} />
         <Route path="/tarifs" element={<Tarifs />} />
         <Route path="/contact" element={<Contact />} />
