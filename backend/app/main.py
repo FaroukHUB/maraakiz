@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routes import public, auth, eleves, merkez, cours
+from app.routes import public, auth, eleves, merkez, cours, messages
 
 # Créer les tables
 Base.metadata.create_all(bind=engine)
@@ -23,6 +23,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(eleves.router, prefix="/api/eleves", tags=["Eleves"])
 app.include_router(merkez.router, prefix="/api/merkez", tags=["Merkez"])
 app.include_router(cours.router, prefix="/api/cours", tags=["Cours"])
+app.include_router(messages.router, prefix="/api/messages", tags=["Messages"])
 
 @app.get("/")
 def read_root():
