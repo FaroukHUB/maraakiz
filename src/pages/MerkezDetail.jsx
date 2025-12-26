@@ -3,17 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Star,
-  MapPin,
   Award,
   Users,
   BookOpen,
-  Clock,
   MessageCircle,
   CheckCircle,
   Calendar,
   ArrowLeft,
   Globe,
-  DollarSign,
   Video,
   TrendingUp
 } from "lucide-react";
@@ -148,10 +145,6 @@ const MerkezDetail = () => {
                     </div>
                   </>
                 )}
-                <div className="flex items-center gap-3 text-gray-700">
-                  <MapPin size={20} className="text-[#437C8B]" />
-                  <span>{merkez.ville}, {merkez.pays}</span>
-                </div>
               </div>
 
               {/* Prix */}
