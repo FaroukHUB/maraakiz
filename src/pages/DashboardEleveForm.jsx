@@ -22,10 +22,6 @@ const DashboardEleveForm = () => {
     telephone: "",
     date_naissance: "",
     genre: "",
-    adresse: "",
-    ville: "",
-    code_postal: "",
-    pays: "France",
     nom_parent: "",
     telephone_parent: "",
     email_parent: "",
@@ -250,51 +246,6 @@ const DashboardEleveForm = () => {
                   <option value="garcon">Garçon</option>
                   <option value="fille">Fille</option>
                 </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Adresse */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Adresse</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Adresse
-                </label>
-                <input
-                  type="text"
-                  name="adresse"
-                  value={formData.adresse}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ville
-                </label>
-                <input
-                  type="text"
-                  name="ville"
-                  value={formData.ville}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Code postal
-                </label>
-                <input
-                  type="text"
-                  name="code_postal"
-                  value={formData.code_postal}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                />
               </div>
             </div>
           </div>

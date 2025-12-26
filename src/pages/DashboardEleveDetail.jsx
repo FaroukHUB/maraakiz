@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   Mail,
   Phone,
-  MapPin,
   Calendar,
   BookOpen,
   Clock,
@@ -184,18 +183,6 @@ const DashboardEleveDetail = () => {
                     >
                       {eleve.telephone}
                     </a>
-                  </div>
-                )}
-                {eleve.adresse && (
-                  <div className="flex items-start space-x-3 text-gray-700">
-                    <MapPin className="text-[#437C8B] flex-shrink-0" size={20} />
-                    <div>
-                      <p>{eleve.adresse}</p>
-                      <p>
-                        {eleve.code_postal} {eleve.ville}
-                      </p>
-                      <p>{eleve.pays}</p>
-                    </div>
                   </div>
                 )}
                 {eleve.date_naissance && (

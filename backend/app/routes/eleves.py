@@ -24,10 +24,6 @@ class EleveCreate(BaseModel):
     telephone: Optional[str] = None
     date_naissance: Optional[date] = None
     genre: Optional[str] = None
-    adresse: Optional[str] = None
-    ville: Optional[str] = None
-    code_postal: Optional[str] = None
-    pays: str = "France"
     nom_parent: Optional[str] = None
     telephone_parent: Optional[str] = None
     email_parent: Optional[str] = None
@@ -48,10 +44,6 @@ class EleveUpdate(BaseModel):
     telephone: Optional[str] = None
     date_naissance: Optional[date] = None
     genre: Optional[str] = None
-    adresse: Optional[str] = None
-    ville: Optional[str] = None
-    code_postal: Optional[str] = None
-    pays: Optional[str] = None
     nom_parent: Optional[str] = None
     telephone_parent: Optional[str] = None
     email_parent: Optional[str] = None
@@ -77,10 +69,6 @@ class EleveResponse(BaseModel):
     telephone: Optional[str]
     date_naissance: Optional[date]
     genre: Optional[str]
-    adresse: Optional[str]
-    ville: Optional[str]
-    code_postal: Optional[str]
-    pays: str
     nom_parent: Optional[str]
     telephone_parent: Optional[str]
     email_parent: Optional[str]

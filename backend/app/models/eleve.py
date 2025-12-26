@@ -18,12 +18,6 @@ class Eleve(Base):
     date_naissance = Column(Date, nullable=True)
     genre = Column(String(20), nullable=True)  # "homme", "femme", "garcon", "fille"
 
-    # Adresse
-    adresse = Column(String(500), nullable=True)
-    ville = Column(String(100), nullable=True)
-    code_postal = Column(String(20), nullable=True)
-    pays = Column(String(100), default="France")
-
     # Contact parent/tuteur (si mineur)
     nom_parent = Column(String(255), nullable=True)
     telephone_parent = Column(String(50), nullable=True)
