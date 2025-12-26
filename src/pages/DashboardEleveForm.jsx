@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import axios from "axios";
-import { Save, X, AlertCircle } from "lucide-react";
+import { Save, X, AlertCircle, Mail, Copy, Check } from "lucide-react";
 
 const API_URL = "http://127.0.0.1:8000";
 
@@ -14,6 +14,11 @@ const DashboardEleveForm = () => {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [credentials, setCredentials] = useState(null);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -105,16 +110,29 @@ const DashboardEleveForm = () => {
             "Content-Type": "application/json"
           }
         });
+        navigate("/dashboard/eleves");
       } else {
-        await axios.post(`${API_URL}/api/eleves/`, dataToSend, {
+        const response = await axios.post(`${API_URL}/api/eleves/`, dataToSend, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
           }
         });
-      }
 
-      navigate("/dashboard/eleves");
+        // Check if user account was created (has credentials)
+        if (response.data.user_created && response.data.temp_password) {
+          setCredentials({
+            email: response.data.email,
+            temp_password: response.data.temp_password,
+            prenom: formData.prenom,
+            nom: formData.nom
+          });
+          setShowCredentialsModal(true);
+          setSaving(false);
+        } else {
+          navigate("/dashboard/eleves");
+        }
+      }
     } catch (error) {
       console.error("Erreur lors de l'enregistrement:", error);
       setError(
@@ -123,6 +141,48 @@ const DashboardEleveForm = () => {
       );
       setSaving(false);
     }
+  };
+
+  const handleCopyCredentials = () => {
+    const text = `Email: ${credentials.email}\nMot de passe: ${credentials.temp_password}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSendEmail = async () => {
+    setEmailSending(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `${API_URL}/api/eleves/send-credentials-email`,
+        {
+          email: credentials.email,
+          temp_password: credentials.temp_password,
+          student_firstname: credentials.prenom,
+          student_lastname: credentials.nom
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      setEmailSent(true);
+    } catch (error) {
+      console.error("Erreur envoi email:", error);
+      alert("Erreur lors de l'envoi de l'email. Veuillez transmettre les identifiants manuellement.");
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowCredentialsModal(false);
+    setCredentials(null);
+    setEmailSent(false);
+    navigate("/dashboard/eleves");
   };
 
   if (loading) {
@@ -480,6 +540,114 @@ const DashboardEleveForm = () => {
           </div>
         </form>
       </div>
+
+      {/* Credentials Modal */}
+      {showCredentialsModal && credentials && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            {/* Header */}
+            <div className="p-6 bg-gradient-to-r from-[#437C8B] to-[#35626f] text-white">
+              <h3 className="text-2xl font-bold">✅ Élève créé avec succès !</h3>
+              <p className="text-sm mt-2 text-white/90">
+                Un compte utilisateur a été créé pour cet élève
+              </p>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <div className="bg-blue-50 border-l-4 border-[#437C8B] p-4 rounded">
+                <p className="text-sm text-gray-700 font-medium mb-2">
+                  📋 Identifiants de connexion :
+                </p>
+                <div className="space-y-2">
+                  <div className="bg-white p-3 rounded border border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1">Email</p>
+                    <p className="font-mono text-sm font-semibold text-gray-900">
+                      {credentials.email}
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 rounded border border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1">Mot de passe temporaire</p>
+                    <p className="font-mono text-lg font-bold text-[#437C8B]">
+                      {credentials.temp_password}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ <strong>Important :</strong> L'élève devra changer son mot de passe dès sa première connexion.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">
+                  Comment transmettre ces identifiants ?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCopyCredentials}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all"
+                  >
+                    {copied ? (
+                      <>
+                        <Check size={18} className="text-green-600" />
+                        <span className="text-green-600">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={18} />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleSendEmail}
+                    disabled={emailSending || emailSent}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#437C8B] text-white rounded-xl hover:bg-[#35626f] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {emailSending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Envoi...</span>
+                      </>
+                    ) : emailSent ? (
+                      <>
+                        <Check size={18} />
+                        <span>Email envoyé !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={18} />
+                        <span>Envoyer par email</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {emailSent && (
+                <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                  <p className="text-sm text-green-800">
+                    ✅ Email envoyé avec succès à <strong>{credentials.email}</strong>
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 bg-gray-50 border-t border-gray-200">
+              <button
+                onClick={handleCloseModal}
+                className="w-full px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all font-medium"
+              >
+                Fermer et voir la liste des élèves
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
