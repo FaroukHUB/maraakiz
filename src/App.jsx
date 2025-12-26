@@ -7,6 +7,9 @@ import MerkezDetail from "./pages/MerkezDetail";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import DashboardEleves from "./pages/DashboardEleves";
+import DashboardEleveForm from "./pages/DashboardEleveForm";
+import DashboardEleveDetail from "./pages/DashboardEleveDetail";
 import Tarifs from "./pages/Tarifs";
 import Contact from "./pages/Contact";
 import Inscription from "./pages/Inscription";
@@ -32,6 +35,10 @@ function App() {
 
         {/* Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/eleves" element={<DashboardEleves />} />
+        <Route path="/dashboard/eleves/nouveau" element={<DashboardEleveForm />} />
+        <Route path="/dashboard/eleves/:id" element={<DashboardEleveDetail />} />
+        <Route path="/dashboard/eleves/:id/modifier" element={<DashboardEleveForm />} />
 
         {/* Autres pages */}
         <Route path="/merkez/:id" element={<MerkezDetail />} />
