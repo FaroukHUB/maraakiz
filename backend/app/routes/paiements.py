@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, extract
+from sqlalchemy import and_, or_, extract, func
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime, date
@@ -399,13 +399,13 @@ async def get_payment_stats(
     total_du = db.query(Paiement).filter(
         Paiement.merkez_id == current_user.merkez_id
     ).with_entities(
-        db.func.sum(Paiement.montant_du)
+        func.sum(Paiement.montant_du)
     ).scalar() or 0
 
     total_paye = db.query(Paiement).filter(
         Paiement.merkez_id == current_user.merkez_id
     ).with_entities(
-        db.func.sum(Paiement.montant_paye)
+        func.sum(Paiement.montant_paye)
     ).scalar() or 0
 
     en_retard_count = db.query(Paiement).filter(
