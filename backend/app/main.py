@@ -3,6 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.routes import public, auth, eleves, merkez, cours, messages, paiements, notes_cours
 
+# Import all models to ensure tables are created
+from app.models import (
+    user as user_model,
+    eleve as eleve_model,
+    merkez as merkez_model,
+    cours as cours_model,
+    message as message_model,
+    paiement as paiement_model,
+    notes_cours as notes_cours_model
+)
+
 # Créer les tables
 Base.metadata.create_all(bind=engine)
 
