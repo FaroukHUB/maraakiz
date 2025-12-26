@@ -7,7 +7,9 @@ import {
   ArrowLeft,
   MessageSquare,
   Clock,
-  Search
+  Search,
+  Plus,
+  X
 } from "lucide-react";
 
 const API_URL = "http://127.0.0.1:8000";
@@ -22,6 +24,10 @@ const DashboardMessages = () => {
   const [nouveauMessage, setNouveauMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [firstMessage, setFirstMessage] = useState("");
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -60,6 +66,61 @@ const DashboardMessages = () => {
     } catch (error) {
       console.error("Erreur chargement conversations:", error);
       setLoading(false);
+    }
+  };
+
+  const fetchContacts = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API_URL}/api/messages/contacts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setContacts(response.data);
+    } catch (error) {
+      console.error("Erreur chargement contacts:", error);
+    }
+  };
+
+  const handleOpenNewMessage = () => {
+    fetchContacts();
+    setShowNewMessageModal(true);
+  };
+
+  const handleSendFirstMessage = async (e) => {
+    e.preventDefault();
+
+    if (!firstMessage.trim() || !selectedContact) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `${API_URL}/api/messages/`,
+        {
+          destinataire_id: selectedContact.id,
+          contenu: firstMessage
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      setFirstMessage("");
+      setSelectedContact(null);
+      setShowNewMessageModal(false);
+
+      // Refresh conversations
+      await fetchConversations();
+
+      // Open the new conversation
+      const newConv = conversations.find(c => c.autre_user_id === selectedContact.id);
+      if (newConv) {
+        handleSelectConversation(newConv);
+      }
+    } catch (error) {
+      console.error("Erreur envoi message:", error);
     }
   };
 
@@ -159,7 +220,16 @@ const DashboardMessages = () => {
         >
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Messages</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">Messages</h2>
+              <button
+                onClick={handleOpenNewMessage}
+                className="p-2 bg-[#437C8B] text-white rounded-xl hover:bg-[#35626f] transition-all"
+                title="Nouveau message"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
             <div className="relative">
               <Search
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -322,6 +392,117 @@ const DashboardMessages = () => {
           )}
         </div>
       </div>
+
+      {/* Modal Nouveau Message */}
+      {showNewMessageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-gray-900">Nouveau message</h3>
+              <button
+                onClick={() => {
+                  setShowNewMessageModal(false);
+                  setSelectedContact(null);
+                  setFirstMessage("");
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {!selectedContact ? (
+                <div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Sélectionnez un destinataire :
+                  </p>
+                  <div className="space-y-2">
+                    {contacts.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">
+                        Aucun contact disponible
+                      </p>
+                    ) : (
+                      contacts.map((contact) => (
+                        <button
+                          key={contact.id}
+                          onClick={() => setSelectedContact(contact)}
+                          className="w-full p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <p className="font-semibold text-gray-900">{contact.nom}</p>
+                          <p className="text-sm text-gray-500">{contact.email}</p>
+                          <p className="text-xs text-gray-400 capitalize mt-1">
+                            {contact.type === "eleve" ? "Élève" : contact.type === "professeur" ? "Professeur" : "Institut"}
+                          </p>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSendFirstMessage} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Destinataire
+                    </label>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                      <div>
+                        <p className="font-semibold text-gray-900">{selectedContact.nom}</p>
+                        <p className="text-sm text-gray-500">{selectedContact.email}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedContact(null)}
+                        className="text-sm text-[#437C8B] hover:underline"
+                      >
+                        Changer
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Message
+                    </label>
+                    <textarea
+                      value={firstMessage}
+                      onChange={(e) => setFirstMessage(e.target.value)}
+                      placeholder="Écrivez votre message..."
+                      rows={6}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent resize-none"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewMessageModal(false);
+                        setSelectedContact(null);
+                        setFirstMessage("");
+                      }}
+                      className="flex-1 px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-medium"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!firstMessage.trim()}
+                      className="flex-1 px-6 py-3 bg-[#437C8B] text-white rounded-xl hover:bg-[#35626f] transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+                    >
+                      <Send size={18} />
+                      Envoyer
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

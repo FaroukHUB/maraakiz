@@ -8,6 +8,8 @@ from datetime import datetime
 from app.database import get_db
 from app.models.message import Message
 from app.models.user import User
+from app.models.eleve import Eleve
+from app.models.merkez import Merkez
 from app.routes.auth import oauth2_scheme
 from jose import JWTError, jwt
 import os
@@ -51,6 +53,16 @@ class ConversationResponse(BaseModel):
     dernier_message: str
     dernier_message_date: datetime
     non_lus: int
+
+
+class ContactResponse(BaseModel):
+    id: int
+    nom: str
+    email: str
+    type: str
+
+    class Config:
+        from_attributes = True
 
 
 # Dependency to get current user
@@ -279,3 +291,62 @@ async def get_unread_count(
     ).count()
 
     return {"count": count}
+
+
+@router.get("/contacts", response_model=List[ContactResponse])
+async def get_available_contacts(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get list of available contacts to start a conversation with
+    - For professors/institutes: returns their students
+    - For students: returns all professors/institutes
+    """
+    contacts = []
+
+    if current_user.user_type in ["professeur", "institut"]:
+        # Get all students of this professor/institute
+        eleves = db.query(Eleve).filter(
+            Eleve.merkez_id == current_user.id
+        ).all()
+
+        for eleve in eleves:
+            contacts.append({
+                "id": eleve.id,
+                "nom": f"{eleve.prenom} {eleve.nom}",
+                "email": eleve.email,
+                "type": "eleve"
+            })
+
+    elif current_user.user_type == "eleve":
+        # Get all professors/institutes
+        # First, find the eleve record
+        eleve = db.query(Eleve).filter(Eleve.user_id == current_user.id).first()
+
+        if eleve and eleve.merkez_id:
+            # Get the merkez (professor/institute)
+            merkez_user = db.query(User).filter(User.id == eleve.merkez_id).first()
+            if merkez_user:
+                contacts.append({
+                    "id": merkez_user.id,
+                    "nom": merkez_user.full_name or merkez_user.email,
+                    "email": merkez_user.email,
+                    "type": merkez_user.user_type
+                })
+
+        # Also get other professors/institutes (for demo purposes)
+        all_merkezes = db.query(User).filter(
+            User.user_type.in_(["professeur", "institut"])
+        ).all()
+
+        for merkez in all_merkezes:
+            if not any(c["id"] == merkez.id for c in contacts):
+                contacts.append({
+                    "id": merkez.id,
+                    "nom": merkez.full_name or merkez.email,
+                    "email": merkez.email,
+                    "type": merkez.user_type
+                })
+
+    return contacts
