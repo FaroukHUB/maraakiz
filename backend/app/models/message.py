@@ -17,7 +17,12 @@ class Message(Base):
 
     # Contenu
     sujet = Column(String(255), nullable=True)  # Sujet du message (optionnel)
-    contenu = Column(Text, nullable=False)  # Contenu du message
+    contenu = Column(Text, nullable=True)  # Contenu du message (optionnel si fichier)
+
+    # Fichiers joints
+    fichier_nom = Column(String(255), nullable=True)  # Nom du fichier uploadé
+    fichier_type = Column(String(100), nullable=True)  # Type MIME du fichier
+    fichier_taille = Column(Integer, nullable=True)  # Taille en bytes
 
     # Statut
     lu = Column(Boolean, default=False)  # Message lu ou non

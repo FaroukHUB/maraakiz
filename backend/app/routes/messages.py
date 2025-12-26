@@ -1,9 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, desc
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
+import shutil
+from pathlib import Path
+import uuid
 
 from app.database import get_db
 from app.models.message import Message
@@ -18,6 +22,23 @@ router = APIRouter()
 
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
+
+# File upload configuration
+UPLOAD_DIR = Path("uploads/messages")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+ALLOWED_EXTENSIONS = {
+    # Images
+    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg",
+    # Documents
+    ".pdf", ".doc", ".docx", ".txt", ".odt",
+    # Archives
+    ".zip", ".rar",
+    # Audio
+    ".mp3", ".wav", ".m4a",
+    # Video (limité)
+    ".mp4", ".mov"
+}
 
 
 # Pydantic schemas
@@ -34,7 +55,10 @@ class MessageResponse(BaseModel):
     expediteur_type: str
     destinataire_type: str
     sujet: Optional[str]
-    contenu: str
+    contenu: Optional[str]
+    fichier_nom: Optional[str]
+    fichier_type: Optional[str]
+    fichier_taille: Optional[int]
     lu: bool
     archived: bool
     conversation_id: str
@@ -184,15 +208,25 @@ async def get_conversation(
 
 @router.post("/", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 async def send_message(
-    message_data: MessageCreate,
+    destinataire_id: int = Form(...),
+    contenu: Optional[str] = Form(None),
+    sujet: Optional[str] = Form(None),
+    fichier: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Send a new message
+    Send a new message with optional file attachment
     """
+    # Validate that at least content or file is provided
+    if not contenu and not fichier:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Le message doit contenir du texte ou un fichier"
+        )
+
     # Verify destinataire exists
-    destinataire = db.query(User).filter(User.id == message_data.destinataire_id).first()
+    destinataire = db.query(User).filter(User.id == destinataire_id).first()
     if not destinataire:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -200,16 +234,53 @@ async def send_message(
         )
 
     # Generate conversation ID
-    conversation_id = generate_conversation_id(current_user.id, message_data.destinataire_id)
+    conversation_id = generate_conversation_id(current_user.id, destinataire_id)
+
+    # Handle file upload if provided
+    fichier_nom = None
+    fichier_type = None
+    fichier_taille = None
+
+    if fichier:
+        # Validate file extension
+        file_ext = Path(fichier.filename).suffix.lower()
+        if file_ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Type de fichier non autorisé. Extensions autorisées: {', '.join(ALLOWED_EXTENSIONS)}"
+            )
+
+        # Read file and check size
+        file_content = await fichier.read()
+        if len(file_content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Fichier trop volumineux. Taille maximale: {MAX_FILE_SIZE / 1024 / 1024}MB"
+            )
+
+        # Generate unique filename
+        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        file_path = UPLOAD_DIR / unique_filename
+
+        # Save file
+        with open(file_path, "wb") as f:
+            f.write(file_content)
+
+        fichier_nom = unique_filename
+        fichier_type = fichier.content_type
+        fichier_taille = len(file_content)
 
     # Create message
     new_message = Message(
         expediteur_id=current_user.id,
-        destinataire_id=message_data.destinataire_id,
+        destinataire_id=destinataire_id,
         expediteur_type=current_user.user_type,
         destinataire_type=destinataire.user_type,
-        sujet=message_data.sujet,
-        contenu=message_data.contenu,
+        sujet=sujet,
+        contenu=contenu,
+        fichier_nom=fichier_nom,
+        fichier_type=fichier_type,
+        fichier_taille=fichier_taille,
         conversation_id=conversation_id
     )
 
@@ -338,3 +409,43 @@ async def get_available_contacts(
                 })
 
     return contacts
+
+
+@router.get("/fichier/{filename}")
+async def get_fichier(
+    filename: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get/download a message file
+    """
+    file_path = UPLOAD_DIR / filename
+
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fichier non trouvé"
+        )
+
+    # Verify that the user has access to this file
+    # Check if the file belongs to a message in user's conversations
+    message = db.query(Message).filter(
+        Message.fichier_nom == filename,
+        or_(
+            Message.expediteur_id == current_user.id,
+            Message.destinataire_id == current_user.id
+        )
+    ).first()
+
+    if not message:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès non autorisé à ce fichier"
+        )
+
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type=message.fichier_type or "application/octet-stream"
+    )

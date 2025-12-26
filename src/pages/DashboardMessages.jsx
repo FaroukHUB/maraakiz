@@ -9,7 +9,12 @@ import {
   Clock,
   Search,
   Plus,
-  X
+  X,
+  Paperclip,
+  Image as ImageIcon,
+  File,
+  Download,
+  Trash2
 } from "lucide-react";
 
 const API_URL = "http://127.0.0.1:8000";
@@ -28,7 +33,11 @@ const DashboardMessages = () => {
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [firstMessage, setFirstMessage] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -86,41 +95,86 @@ const DashboardMessages = () => {
     setShowNewMessageModal(true);
   };
 
+  const handleFileSelect = (file) => {
+    if (!file) return;
+
+    setSelectedFile(file);
+
+    // Create preview for images
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFilePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  const handleFileInputChange = (e) => {
+    const file = e.target.files?.[0];
+    handleFileSelect(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    handleFileSelect(file);
+  };
+
+  const clearFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSendFirstMessage = async (e) => {
     e.preventDefault();
 
-    if (!firstMessage.trim() || !selectedContact) return;
+    if (!firstMessage.trim() && !selectedFile) return;
+    if (!selectedContact) return;
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post(
-        `${API_URL}/api/messages/`,
-        {
-          destinataire_id: selectedContact.id,
-          contenu: firstMessage
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
+      const formData = new FormData();
+      formData.append("destinataire_id", selectedContact.id);
+      if (firstMessage.trim()) {
+        formData.append("contenu", firstMessage);
+      }
+      if (selectedFile) {
+        formData.append("fichier", selectedFile);
+      }
+
+      await axios.post(`${API_URL}/api/messages/`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         }
-      );
+      });
 
       setFirstMessage("");
+      clearFile();
       setSelectedContact(null);
       setShowNewMessageModal(false);
 
       // Refresh conversations
       await fetchConversations();
-
-      // Open the new conversation
-      const newConv = conversations.find(c => c.autre_user_id === selectedContact.id);
-      if (newConv) {
-        handleSelectConversation(newConv);
-      }
     } catch (error) {
       console.error("Erreur envoi message:", error);
+      alert("Erreur lors de l'envoi du message");
     }
   };
 
@@ -147,30 +201,34 @@ const DashboardMessages = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
-    if (!nouveauMessage.trim() || !selectedConversation) return;
+    if (!nouveauMessage.trim() && !selectedFile) return;
+    if (!selectedConversation) return;
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post(
-        `${API_URL}/api/messages/`,
-        {
-          destinataire_id: selectedConversation.autre_user_id,
-          contenu: nouveauMessage
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
+      const formData = new FormData();
+      formData.append("destinataire_id", selectedConversation.autre_user_id);
+      if (nouveauMessage.trim()) {
+        formData.append("contenu", nouveauMessage);
+      }
+      if (selectedFile) {
+        formData.append("fichier", selectedFile);
+      }
+
+      await axios.post(`${API_URL}/api/messages/`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         }
-      );
+      });
 
       setNouveauMessage("");
+      clearFile();
 
       // Reload messages
       handleSelectConversation(selectedConversation);
     } catch (error) {
       console.error("Erreur envoi message:", error);
+      alert("Erreur lors de l'envoi du message");
     }
   };
 
@@ -193,6 +251,27 @@ const DashboardMessages = () => {
         month: "short"
       });
     }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
+
+  const getFileIcon = (fileName, fileType) => {
+    if (fileType?.startsWith("image/")) return <ImageIcon size={16} />;
+    return <File size={16} />;
+  };
+
+  const getAvatarColor = (userId) => {
+    const colors = ["#437C8B", "#E8833A", "#8B4367", "#3A8BE8", "#8BE83A"];
+    return colors[userId % colors.length];
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name.charAt(0).toUpperCase();
   };
 
   const filteredConversations = conversations.filter((conv) =>
@@ -224,7 +303,7 @@ const DashboardMessages = () => {
               <h2 className="text-2xl font-bold text-gray-900">Messages</h2>
               <button
                 onClick={handleOpenNewMessage}
-                className="p-2 bg-[#437C8B] text-white rounded-xl hover:bg-[#35626f] transition-all"
+                className="p-2.5 bg-[#437C8B] text-white rounded-xl hover:bg-[#35626f] transition-all hover:scale-105"
                 title="Nouveau message"
               >
                 <Plus size={20} />
@@ -240,7 +319,7 @@ const DashboardMessages = () => {
                 placeholder="Rechercher..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -253,36 +332,46 @@ const DashboardMessages = () => {
                 <p className="text-gray-600">Aucune conversation</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-gray-100">
                 {filteredConversations.map((conv) => (
                   <button
                     key={conv.conversation_id}
                     onClick={() => handleSelectConversation(conv)}
-                    className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
+                    className={`w-full p-4 text-left hover:bg-gray-50 transition-all ${
                       selectedConversation?.conversation_id === conv.conversation_id
-                        ? "bg-blue-50"
+                        ? "bg-blue-50 border-l-4 border-[#437C8B]"
                         : ""
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      {/* Avatar */}
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0"
+                        style={{ backgroundColor: getAvatarColor(conv.autre_user_id) }}
+                      >
+                        {getInitials(conv.autre_user_nom)}
+                      </div>
+
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center justify-between gap-2 mb-1">
                           <p className="font-semibold text-gray-900 truncate">
                             {conv.autre_user_nom}
                           </p>
+                          <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+                            <Clock size={12} />
+                            <span>{formatDate(conv.dernier_message_date)}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-gray-600 truncate flex-1">
+                            {conv.dernier_message}
+                          </p>
                           {conv.non_lus > 0 && (
-                            <span className="bg-[#437C8B] text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                            <span className="bg-[#437C8B] text-white text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0">
                               {conv.non_lus}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 truncate">
-                          {conv.dernier_message}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Clock size={12} />
-                        <span>{formatDate(conv.dernier_message_date)}</span>
                       </div>
                     </div>
                   </button>
@@ -299,25 +388,30 @@ const DashboardMessages = () => {
           }`}
         >
           {!selectedConversation ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-              <MessageSquare size={64} className="mb-4" />
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gradient-to-br from-gray-50 to-gray-100">
+              <MessageSquare size={64} className="mb-4 opacity-50" />
               <p className="text-lg">Sélectionnez une conversation</p>
             </div>
           ) : (
             <>
               {/* Header */}
-              <div className="p-6 border-b border-gray-200 flex items-center gap-4">
+              <div className="p-4 border-b border-gray-200 flex items-center gap-4 bg-gradient-to-r from-[#437C8B] to-[#35626f] text-white">
                 <button
                   onClick={() => setSelectedConversation(null)}
-                  className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
                 >
                   <ArrowLeft size={20} />
                 </button>
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center bg-white/20 font-semibold flex-shrink-0"
+                >
+                  {getInitials(selectedConversation.autre_user_nom)}
+                </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-lg font-bold">
                     {selectedConversation.autre_user_nom}
                   </h3>
-                  <p className="text-sm text-gray-500 capitalize">
+                  <p className="text-xs text-white/80 capitalize">
                     {selectedConversation.autre_user_type === "prof"
                       ? "Professeur"
                       : "Élève"}
@@ -326,7 +420,7 @@ const DashboardMessages = () => {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-br from-gray-50 to-gray-100">
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-400 py-12">
                     <p>Aucun message dans cette conversation</p>
@@ -337,19 +431,64 @@ const DashboardMessages = () => {
                     return (
                       <div
                         key={msg.id}
-                        className={`flex ${isFromMe ? "justify-end" : "justify-start"}`}
+                        className={`flex ${isFromMe ? "justify-end" : "justify-start"} animate-fade-in`}
                       >
                         <div
-                          className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                          className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm ${
                             isFromMe
-                              ? "bg-[#437C8B] text-white"
-                              : "bg-gray-100 text-gray-900"
+                              ? "bg-gradient-to-br from-[#437C8B] to-[#35626f] text-white"
+                              : "bg-white text-gray-900 border border-gray-200"
                           }`}
                         >
                           {msg.sujet && (
-                            <p className="font-semibold mb-1">{msg.sujet}</p>
+                            <p className="font-semibold mb-1 text-sm opacity-90">{msg.sujet}</p>
                           )}
-                          <p className="whitespace-pre-wrap">{msg.contenu}</p>
+                          {msg.contenu && (
+                            <p className="whitespace-pre-wrap">{msg.contenu}</p>
+                          )}
+
+                          {/* File attachment */}
+                          {msg.fichier_nom && (
+                            <div className={`mt-2 p-2 rounded-lg ${
+                              isFromMe ? "bg-white/10" : "bg-gray-100"
+                            }`}>
+                              {msg.fichier_type?.startsWith("image/") ? (
+                                <div>
+                                  <img
+                                    src={`${API_URL}/api/messages/fichier/${msg.fichier_nom}`}
+                                    alt="Image"
+                                    className="max-w-full rounded-lg mb-2 cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => window.open(`${API_URL}/api/messages/fichier/${msg.fichier_nom}`, '_blank')}
+                                  />
+                                  <div className="flex items-center justify-between text-xs opacity-80">
+                                    <span>{formatFileSize(msg.fichier_taille)}</span>
+                                    <a
+                                      href={`${API_URL}/api/messages/fichier/${msg.fichier_nom}`}
+                                      download
+                                      className="flex items-center gap-1 hover:underline"
+                                    >
+                                      <Download size={12} />
+                                      Télécharger
+                                    </a>
+                                  </div>
+                                </div>
+                              ) : (
+                                <a
+                                  href={`${API_URL}/api/messages/fichier/${msg.fichier_nom}`}
+                                  download
+                                  className="flex items-center gap-2 text-sm hover:underline"
+                                >
+                                  {getFileIcon(msg.fichier_nom, msg.fichier_type)}
+                                  <span className="flex-1 truncate">{msg.fichier_nom}</span>
+                                  <span className="text-xs opacity-70">
+                                    {formatFileSize(msg.fichier_taille)}
+                                  </span>
+                                  <Download size={14} />
+                                </a>
+                              )}
+                            </div>
+                          )}
+
                           <p
                             className={`text-xs mt-2 ${
                               isFromMe ? "text-white/70" : "text-gray-500"
@@ -368,20 +507,82 @@ const DashboardMessages = () => {
               {/* Input */}
               <form
                 onSubmit={handleSendMessage}
-                className="p-6 border-t border-gray-200"
+                className="p-4 border-t border-gray-200 bg-white"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
               >
-                <div className="flex gap-3">
+                {/* File preview */}
+                {selectedFile && (
+                  <div className="mb-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="flex items-center gap-3">
+                      {filePreview ? (
+                        <img
+                          src={filePreview}
+                          alt="Preview"
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                          <File size={24} className="text-gray-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {selectedFile.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatFileSize(selectedFile.size)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearFile}
+                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={16} className="text-gray-500" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Drag overlay */}
+                {isDragging && (
+                  <div className="absolute inset-0 bg-[#437C8B]/10 border-2 border-dashed border-[#437C8B] rounded-xl flex items-center justify-center z-10">
+                    <div className="text-center">
+                      <Paperclip size={48} className="mx-auto mb-2 text-[#437C8B]" />
+                      <p className="text-[#437C8B] font-medium">Déposez votre fichier ici</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                    accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp3,.wav,.mp4"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-3 hover:bg-gray-100 rounded-xl transition-all"
+                    title="Joindre un fichier"
+                  >
+                    <Paperclip size={20} className="text-gray-600" />
+                  </button>
                   <input
                     type="text"
                     value={nouveauMessage}
                     onChange={(e) => setNouveauMessage(e.target.value)}
                     placeholder="Écrivez votre message..."
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent transition-all"
                   />
                   <button
                     type="submit"
-                    disabled={!nouveauMessage.trim()}
-                    className="px-6 py-3 bg-[#437C8B] text-white rounded-xl hover:bg-[#35626f] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    disabled={!nouveauMessage.trim() && !selectedFile}
+                    className="px-6 py-3 bg-gradient-to-r from-[#437C8B] to-[#35626f] text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2 disabled:hover:shadow-none"
                   >
                     <Send size={20} />
                     <span className="hidden sm:inline">Envoyer</span>
@@ -395,18 +596,19 @@ const DashboardMessages = () => {
 
       {/* Modal Nouveau Message */}
       {showNewMessageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col animate-scale-in">
             {/* Header */}
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-gray-900">Nouveau message</h3>
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-[#437C8B] to-[#35626f] text-white">
+              <h3 className="text-2xl font-bold">Nouveau message</h3>
               <button
                 onClick={() => {
                   setShowNewMessageModal(false);
                   setSelectedContact(null);
                   setFirstMessage("");
+                  clearFile();
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>
@@ -429,13 +631,23 @@ const DashboardMessages = () => {
                         <button
                           key={contact.id}
                           onClick={() => setSelectedContact(contact)}
-                          className="w-full p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                          className="w-full p-4 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-[#437C8B] transition-all text-left"
                         >
-                          <p className="font-semibold text-gray-900">{contact.nom}</p>
-                          <p className="text-sm text-gray-500">{contact.email}</p>
-                          <p className="text-xs text-gray-400 capitalize mt-1">
-                            {contact.type === "eleve" ? "Élève" : contact.type === "professeur" ? "Professeur" : "Institut"}
-                          </p>
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
+                              style={{ backgroundColor: getAvatarColor(contact.id) }}
+                            >
+                              {getInitials(contact.nom)}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-semibold text-gray-900">{contact.nom}</p>
+                              <p className="text-sm text-gray-500">{contact.email}</p>
+                              <p className="text-xs text-gray-400 capitalize mt-1">
+                                {contact.type === "eleve" ? "Élève" : contact.type === "professeur" ? "Professeur" : "Institut"}
+                              </p>
+                            </div>
+                          </div>
                         </button>
                       ))
                     )}
@@ -447,42 +659,99 @@ const DashboardMessages = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Destinataire
                     </label>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                      <div>
-                        <p className="font-semibold text-gray-900">{selectedContact.nom}</p>
-                        <p className="text-sm text-gray-500">{selectedContact.email}</p>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                          style={{ backgroundColor: getAvatarColor(selectedContact.id) }}
+                        >
+                          {getInitials(selectedContact.nom)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{selectedContact.nom}</p>
+                          <p className="text-sm text-gray-500">{selectedContact.email}</p>
+                        </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => setSelectedContact(null)}
-                        className="text-sm text-[#437C8B] hover:underline"
+                        className="text-sm text-[#437C8B] hover:underline font-medium"
                       >
                         Changer
                       </button>
                     </div>
                   </div>
 
+                  {selectedFile && (
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="flex items-center gap-3">
+                        {filePreview ? (
+                          <img
+                            src={filePreview}
+                            alt="Preview"
+                            className="w-16 h-16 object-cover rounded-lg"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <File size={24} className="text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {selectedFile.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatFileSize(selectedFile.size)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={clearFile}
+                          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={16} className="text-gray-500" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Message
+                      Message {!selectedFile && "(obligatoire)"}
                     </label>
                     <textarea
                       value={firstMessage}
                       onChange={(e) => setFirstMessage(e.target.value)}
                       placeholder="Écrivez votre message..."
                       rows={6}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent resize-none"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent resize-none transition-all"
                       autoFocus
                     />
                   </div>
 
                   <div className="flex gap-3">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileInputChange}
+                      className="hidden"
+                      accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp3,.wav,.mp4"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-medium flex items-center gap-2"
+                    >
+                      <Paperclip size={18} />
+                      Fichier
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
                         setShowNewMessageModal(false);
                         setSelectedContact(null);
                         setFirstMessage("");
+                        clearFile();
                       }}
                       className="flex-1 px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-medium"
                     >
@@ -490,8 +759,8 @@ const DashboardMessages = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={!firstMessage.trim()}
-                      className="flex-1 px-6 py-3 bg-[#437C8B] text-white rounded-xl hover:bg-[#35626f] transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+                      disabled={!firstMessage.trim() && !selectedFile}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-[#437C8B] to-[#35626f] text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
                     >
                       <Send size={18} />
                       Envoyer
@@ -503,6 +772,23 @@ const DashboardMessages = () => {
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scale-in {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out;
+        }
+        .animate-scale-in {
+          animation: scale-in 0.2s ease-out;
+        }
+      `}</style>
     </DashboardLayout>
   );
 };
