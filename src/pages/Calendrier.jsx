@@ -21,6 +21,8 @@ const Calendrier = () => {
   const [trames, setTrames] = useState([]);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState('month');
+  const [date, setDate] = useState(new Date());
 
   const [formData, setFormData] = useState({
     eleve_ids: [],
@@ -326,7 +328,10 @@ const Calendrier = () => {
           onSelectEvent={handleSelectEvent}
           eventPropGetter={eventStyleGetter}
           views={['month', 'week', 'day']}
-          defaultView="month"
+          view={view}
+          onView={(newView) => setView(newView)}
+          date={date}
+          onNavigate={(newDate) => setDate(newDate)}
           messages={{
             next: "Suivant",
             previous: "Précédent",
