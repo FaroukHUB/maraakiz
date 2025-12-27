@@ -44,12 +44,11 @@ const Calendrier = () => {
 
   const [formData, setFormData] = useState({
     eleve_ids: [],
-    titre: '',
     matiere: 'coran',
     description: '',
-    date_debut: '',
-    date_fin: '',
-    type_cours: 'presentiel',
+    date: '',
+    heure_debut: '',
+    heure_fin: '',
     lien_visio: '',
     trame_cours_id: null,
     sync_to_google: true,
@@ -150,8 +149,9 @@ const Calendrier = () => {
     setSelectedDate({ start, end });
     setFormData({
       ...formData,
-      date_debut: moment(start).format('YYYY-MM-DDTHH:mm'),
-      date_fin: moment(end).format('YYYY-MM-DDTHH:mm')
+      date: moment(start).format('YYYY-MM-DD'),
+      heure_debut: '09:00',
+      heure_fin: '10:00'
     });
     setSelectedEvent(null);
     setShowModal(true);
@@ -164,12 +164,11 @@ const Calendrier = () => {
     // Pré-remplir le formulaire avec les données de l'événement
     setFormData({
       eleve_ids: event.resource.eleves.map(e => e.id),
-      titre: event.resource.titre,
       matiere: event.resource.matiere || 'coran',
       description: event.resource.description || '',
-      date_debut: moment(event.resource.date_debut).format('YYYY-MM-DDTHH:mm'),
-      date_fin: moment(event.resource.date_fin).format('YYYY-MM-DDTHH:mm'),
-      type_cours: event.resource.type_cours || 'presentiel',
+      date: moment(event.resource.date_debut).format('YYYY-MM-DD'),
+      heure_debut: moment(event.resource.date_debut).format('HH:mm'),
+      heure_fin: moment(event.resource.date_fin).format('HH:mm'),
       lien_visio: event.resource.lien_visio || '',
       trame_cours_id: event.resource.trame_cours_id,
       sync_to_google: event.resource.sync_to_google,
@@ -195,11 +194,35 @@ const Calendrier = () => {
     try {
       const token = localStorage.getItem('token');
 
+      // Combiner date + heures pour créer datetime
+      const date_debut = `${formData.date}T${formData.heure_debut}`;
+      const date_fin = `${formData.date}T${formData.heure_fin}`;
+
+      // Générer le titre automatiquement
+      const elevesSelectionnes = eleves.filter(e => formData.eleve_ids.includes(e.id));
+      const titre = elevesSelectionnes.length > 0
+        ? `Cours ${formData.matiere} - ${elevesSelectionnes.map(e => e.prenom).join(', ')}`
+        : `Cours ${formData.matiere}`;
+
+      // Préparer les données pour l'API
+      const dataToSend = {
+        ...formData,
+        titre,
+        date_debut,
+        date_fin,
+        type_cours: 'en-ligne' // Toujours en ligne
+      };
+
+      // Supprimer les champs temporaires
+      delete dataToSend.date;
+      delete dataToSend.heure_debut;
+      delete dataToSend.heure_fin;
+
       if (selectedEvent) {
         // Update existing cours
         await axios.put(
           `${API_URL}/api/calendrier/cours/${selectedEvent.id}`,
-          formData,
+          dataToSend,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         alert('Cours modifié avec succès !');
@@ -207,7 +230,7 @@ const Calendrier = () => {
         // Create new cours
         await axios.post(
           `${API_URL}/api/calendrier/cours`,
-          formData,
+          dataToSend,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         alert('Cours créé avec succès !');
@@ -245,12 +268,11 @@ const Calendrier = () => {
   const resetForm = () => {
     setFormData({
       eleve_ids: [],
-      titre: '',
       matiere: 'coran',
       description: '',
-      date_debut: '',
-      date_fin: '',
-      type_cours: 'presentiel',
+      date: '',
+      heure_debut: '',
+      heure_fin: '',
       lien_visio: '',
       trame_cours_id: null,
       sync_to_google: true,
@@ -297,10 +319,6 @@ const Calendrier = () => {
     if (statut === 'termine') {
       opacity = 0.5;
       borderColor = '#10b981'; // Vert pour terminé
-    } else if (statut === 'annule') {
-      opacity = 0.3;
-      borderColor = '#ef4444'; // Rouge pour annulé
-      backgroundColor = '#d1d5db'; // Gris
     } else if (statut === 'reporte') {
       borderColor = '#f59e0b'; // Orange pour reporté
     } else {
@@ -365,7 +383,7 @@ const Calendrier = () => {
         <div className="legend-items">
           <div className="legend-item">
             <div className="legend-bar" style={{ backgroundColor: '#3b82f6' }}></div>
-            <span>À venir / Planifié</span>
+            <span>À venir</span>
           </div>
           <div className="legend-item">
             <div className="legend-bar" style={{ backgroundColor: '#10b981', opacity: 0.5 }}></div>
@@ -374,10 +392,6 @@ const Calendrier = () => {
           <div className="legend-item">
             <div className="legend-bar" style={{ backgroundColor: '#f59e0b' }}></div>
             <span>Reporté</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-bar" style={{ backgroundColor: '#d1d5db' }}></div>
-            <span>Annulé</span>
           </div>
         </div>
       </div>
@@ -413,154 +427,149 @@ const Calendrier = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="cours-form">
-              {/* Trame de cours */}
-              {!selectedEvent && trames.length > 0 && (
-                <div className="form-group">
-                  <label>📋 Utiliser une trame de cours</label>
-                  <select onChange={(e) => handleTrameSelect(e.target.value)}>
-                    <option value="">-- Sélectionner une trame --</option>
-                    {trames.map(trame => (
-                      <option key={trame.id} value={trame.id}>
-                        {trame.nom} ({trame.matiere})
+              {/* Sélection élève(s) - Dropdown moderne */}
+              <div className="form-group">
+                <label>👥 Élève(s) *</label>
+                {eleves.length === 0 ? (
+                  <div className="no-eleves-message">
+                    <p>⚠️ Aucun élève disponible. Veuillez d'abord ajouter des élèves.</p>
+                  </div>
+                ) : (
+                  <select
+                    className="modern-select"
+                    value=""
+                    onChange={(e) => {
+                      const eleveId = parseInt(e.target.value);
+                      if (eleveId && !formData.eleve_ids.includes(eleveId)) {
+                        setFormData({
+                          ...formData,
+                          eleve_ids: [...formData.eleve_ids, eleveId]
+                        });
+                      }
+                    }}
+                  >
+                    <option value="">+ Ajouter un élève</option>
+                    {eleves.filter(e => !formData.eleve_ids.includes(e.id)).map(eleve => (
+                      <option key={eleve.id} value={eleve.id}>
+                        {eleve.prenom} {eleve.nom}
                       </option>
                     ))}
                   </select>
-                </div>
-              )}
-
-              {/* Sélection multi-élèves */}
-              <div className="form-group">
-                <label>👥 Élève(s) * <span className="text-sm text-gray-500">(cochez un ou plusieurs élèves)</span></label>
-                {eleves.length === 0 ? (
-                  <div className="no-eleves-message">
-                    <p>⚠️ Aucun élève disponible. Veuillez d'abord ajouter des élèves à votre liste.</p>
-                  </div>
-                ) : (
-                  <div className="eleves-selector">
-                    {eleves.map(eleve => (
-                      <label key={eleve.id} className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={formData.eleve_ids.includes(eleve.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFormData({
-                                ...formData,
-                                eleve_ids: [...formData.eleve_ids, eleve.id]
-                              });
-                            } else {
-                              setFormData({
-                                ...formData,
-                                eleve_ids: formData.eleve_ids.filter(id => id !== eleve.id)
-                              });
-                            }
-                          }}
-                        />
-                        {eleve.prenom} {eleve.nom}
-                      </label>
-                    ))}
-                  </div>
                 )}
+
+                {/* Liste des élèves sélectionnés */}
                 {formData.eleve_ids.length > 0 && (
-                  <p className="selected-count">✓ {formData.eleve_ids.length} élève(s) sélectionné(s)</p>
+                  <div className="selected-eleves">
+                    {formData.eleve_ids.map(eleveId => {
+                      const eleve = eleves.find(e => e.id === eleveId);
+                      return eleve ? (
+                        <div key={eleveId} className="selected-eleve-chip">
+                          <span>{eleve.prenom} {eleve.nom}</span>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({
+                              ...formData,
+                              eleve_ids: formData.eleve_ids.filter(id => id !== eleveId)
+                            })}
+                            className="remove-chip"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
                 )}
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Titre *</label>
-                  <input
-                    type="text"
-                    value={formData.titre}
-                    onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Matière</label>
-                  <select
-                    value={formData.matiere}
-                    onChange={(e) => setFormData({ ...formData, matiere: e.target.value })}
-                  >
-                    <option value="coran">Coran</option>
-                    <option value="arabe">Arabe</option>
-                    <option value="tajwid">Tajwid</option>
-                    <option value="fiqh">Fiqh</option>
-                    <option value="aqida">Aqida</option>
-                  </select>
-                </div>
-              </div>
-
+              {/* Date (readonly) + Horaires */}
               <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows="3"
+                <label>📅 Date</label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  readOnly
+                  className="readonly-input"
                 />
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Date et heure de début *</label>
+                  <label>⏰ Heure de début *</label>
                   <input
-                    type="datetime-local"
-                    value={formData.date_debut}
-                    onChange={(e) => setFormData({ ...formData, date_debut: e.target.value })}
+                    type="time"
+                    value={formData.heure_debut}
+                    onChange={(e) => setFormData({ ...formData, heure_debut: e.target.value })}
                     required
+                    className="time-input"
                   />
                 </div>
 
                 <div className="form-group">
-                  <label>Date et heure de fin *</label>
+                  <label>⏱️ Heure de fin *</label>
                   <input
-                    type="datetime-local"
-                    value={formData.date_fin}
-                    onChange={(e) => setFormData({ ...formData, date_fin: e.target.value })}
+                    type="time"
+                    value={formData.heure_fin}
+                    onChange={(e) => setFormData({ ...formData, heure_fin: e.target.value })}
                     required
+                    className="time-input"
                   />
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Type de cours</label>
-                  <select
-                    value={formData.type_cours}
-                    onChange={(e) => setFormData({ ...formData, type_cours: e.target.value })}
-                  >
-                    <option value="presentiel">Présentiel</option>
-                    <option value="en-ligne">En ligne</option>
-                    <option value="en-differe">En différé</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Statut du cours</label>
-                  <select
-                    value={formData.statut || 'planifie'}
-                    onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
-                  >
-                    <option value="planifie">📅 Planifié / À venir</option>
-                    <option value="termine">✅ Terminé</option>
-                    <option value="annule">❌ Annulé</option>
-                    <option value="reporte">⏸️ Reporté</option>
-                  </select>
-                </div>
+              {/* Matière */}
+              <div className="form-group">
+                <label>📚 Matière</label>
+                <select
+                  value={formData.matiere}
+                  onChange={(e) => setFormData({ ...formData, matiere: e.target.value })}
+                  className="modern-select"
+                >
+                  <option value="coran">Coran</option>
+                  <option value="arabe">Arabe</option>
+                  <option value="tajwid">Tajwid</option>
+                  <option value="fiqh">Fiqh</option>
+                  <option value="aqida">Aqida</option>
+                </select>
               </div>
 
-              {formData.type_cours === 'en-ligne' && (
-                <div className="form-group">
-                  <label>Lien visio</label>
-                  <input
-                    type="url"
-                    value={formData.lien_visio}
-                    onChange={(e) => setFormData({ ...formData, lien_visio: e.target.value })}
-                    placeholder="https://meet.google.com/..."
-                  />
-                </div>
-              )}
+              {/* Lien visio */}
+              <div className="form-group">
+                <label>🔗 Lien visio</label>
+                <input
+                  type="url"
+                  value={formData.lien_visio}
+                  onChange={(e) => setFormData({ ...formData, lien_visio: e.target.value })}
+                  placeholder="https://meet.google.com/..."
+                  className="url-input"
+                />
+              </div>
+
+              {/* Statut (sans annulé) */}
+              <div className="form-group">
+                <label>📊 Statut</label>
+                <select
+                  value={formData.statut}
+                  onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
+                  className="modern-select"
+                >
+                  <option value="planifie">📅 À venir</option>
+                  <option value="termine">✅ Terminé</option>
+                  <option value="reporte">⏸️ Reporté</option>
+                </select>
+              </div>
+
+              {/* Description optionnelle */}
+              <div className="form-group">
+                <label>📝 Notes (optionnel)</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows="3"
+                  placeholder="Points à aborder, devoirs..."
+                  className="modern-textarea"
+                />
+              </div>
 
               {googleConnected && (
                 <div className="form-group">
