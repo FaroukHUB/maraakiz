@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routes import public, auth, eleves, merkez, cours, messages, paiements, notes_cours
+from app.routes import public, auth, eleves, merkez, messages, paiements, notes_cours, calendrier
 
 # Import all models to ensure tables are created
 from app.models import (
@@ -33,7 +33,7 @@ app.include_router(public.router, prefix="/api/public", tags=["Public"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(eleves.router, prefix="/api/eleves", tags=["Eleves"])
 app.include_router(merkez.router, prefix="/api/merkez", tags=["Merkez"])
-app.include_router(cours.router, prefix="/api/cours", tags=["Cours"])
+app.include_router(calendrier.router, prefix="/api/calendrier", tags=["Calendrier"])
 app.include_router(messages.router, prefix="/api/messages", tags=["Messages"])
 app.include_router(paiements.router, prefix="/api/paiements", tags=["Paiements"])
 app.include_router(notes_cours.router, prefix="/api/notes-cours", tags=["Notes de Cours"])

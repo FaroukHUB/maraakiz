@@ -19,6 +19,12 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
 
+    # Google Calendar Integration
+    google_access_token = Column(String(500), nullable=True)  # Token d'accès Google
+    google_refresh_token = Column(String(500), nullable=True)  # Token de rafraîchissement
+    google_token_expiry = Column(DateTime(timezone=True), nullable=True)  # Expiration du token
+    google_calendar_connected = Column(Boolean, default=False)  # Statut de connexion
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
