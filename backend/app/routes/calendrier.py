@@ -61,18 +61,17 @@ class CoursUpdate(BaseModel):
 
 
 class RecurrentCoursCreate(BaseModel):
-    """Schéma pour créer des cours récurrents"""
+    """Schéma pour créer des cours récurrents avec horaires personnalisés par jour"""
     eleve_ids: List[int]  # Élèves du groupe
     titre: str
     matiere: Optional[str] = None
     description: Optional[str] = None
 
-    # Horaires (heure uniquement, sera appliqué à chaque jour)
-    heure_debut: str  # Format "HH:MM" ex: "20:00"
-    heure_fin: str    # Format "HH:MM" ex: "21:00"
+    # Horaires par jour - dict avec jour (0-6) comme clé et {debut, fin} comme valeur
+    # Ex: {"0": {"debut": "21:00", "fin": "22:00"}, "2": {"debut": "19:30", "fin": "20:30"}}
+    recurrence_schedule: dict  # Format: {day_number: {"debut": "HH:MM", "fin": "HH:MM"}}
 
     # Récurrence
-    recurrence_days: List[int]  # Jours de la semaine (0=Lundi, 1=Mardi... 6=Dimanche)
     recurrence_start_date: date  # Date de début de la récurrence
     recurrence_end_date: date    # Date de fin de la récurrence
 
@@ -464,24 +463,24 @@ async def create_recurrent_cours(
 
     # Règle de récurrence à stocker
     recurrence_rule = {
-        "days": recurrent_data.recurrence_days,
+        "schedule": recurrent_data.recurrence_schedule,
         "start_date": recurrent_data.recurrence_start_date.isoformat(),
-        "end_date": recurrent_data.recurrence_end_date.isoformat(),
-        "heure_debut": recurrent_data.heure_debut,
-        "heure_fin": recurrent_data.heure_fin
+        "end_date": recurrent_data.recurrence_end_date.isoformat()
     }
 
     # ID du cours parent (sera le premier cours créé)
     parent_cours_id = None
 
     while current_date <= recurrent_data.recurrence_end_date:
-        # Vérifier si ce jour de la semaine est dans la liste (0=Lundi, 6=Dimanche)
+        # Vérifier si ce jour de la semaine a un horaire défini
         weekday = current_date.weekday()
+        weekday_str = str(weekday)
 
-        if weekday in recurrent_data.recurrence_days:
-            # Créer datetime complets
-            heure_debut_parts = recurrent_data.heure_debut.split(':')
-            heure_fin_parts = recurrent_data.heure_fin.split(':')
+        if weekday_str in recurrent_data.recurrence_schedule:
+            # Récupérer les horaires pour ce jour
+            schedule = recurrent_data.recurrence_schedule[weekday_str]
+            heure_debut_parts = schedule["debut"].split(':')
+            heure_fin_parts = schedule["fin"].split(':')
 
             date_debut = datetime.combine(
                 current_date,

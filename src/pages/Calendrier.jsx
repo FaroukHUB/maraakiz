@@ -78,8 +78,8 @@ const Calendrier = () => {
     trame_cours_id: null,
     sync_to_google: true,
     statut: 'planifie',
-    // Champs pour cours récurrents
-    recurrence_days: [],  // Jours de la semaine (0-6)
+    // Champs pour cours récurrents - horaires personnalisés par jour
+    recurrence_schedule: {},  // Format: {"0": {"debut": "21:00", "fin": "22:00"}, "2": {"debut": "19:30", "fin": "20:30"}}
     recurrence_end_date: ''  // Date de fin de la récurrence
   });
 
@@ -229,15 +229,13 @@ const Calendrier = () => {
         : `Cours ${formData.matiere}`;
 
       if (isRecurrent && !selectedEvent) {
-        // Créer des cours récurrents
+        // Créer des cours récurrents avec horaires personnalisés
         const dataToSend = {
           eleve_ids: formData.eleve_ids,
           titre,
           matiere: formData.matiere,
           description: formData.description,
-          heure_debut: formData.heure_debut,
-          heure_fin: formData.heure_fin,
-          recurrence_days: formData.recurrence_days,
+          recurrence_schedule: formData.recurrence_schedule,  // Horaires par jour
           recurrence_start_date: formData.date,
           recurrence_end_date: formData.recurrence_end_date,
           type_cours: 'en-ligne',
@@ -271,7 +269,7 @@ const Calendrier = () => {
         delete dataToSend.date;
         delete dataToSend.heure_debut;
         delete dataToSend.heure_fin;
-        delete dataToSend.recurrence_days;
+        delete dataToSend.recurrence_schedule;
         delete dataToSend.recurrence_end_date;
 
         if (selectedEvent) {
@@ -334,7 +332,7 @@ const Calendrier = () => {
       trame_cours_id: null,
       sync_to_google: true,
       statut: 'planifie',
-      recurrence_days: [],
+      recurrence_schedule: {},
       recurrence_end_date: ''
     });
     setSelectedEvent(null);
@@ -571,34 +569,74 @@ const Calendrier = () => {
                 />
               </div>
 
-              {/* Sélection des jours (seulement pour récurrent) */}
+              {/* Sélection des jours avec horaires (seulement pour récurrent) */}
               {isRecurrent && (
                 <div className="form-group">
-                  <label>📆 Jours de la semaine *</label>
+                  <label>📆 Jours et horaires *</label>
+                  <p style={{fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.75rem'}}>
+                    Cliquez sur un jour pour définir ses horaires
+                  </p>
                   <div className="days-selector">
                     {[
-                      { id: 0, name: 'Lun' },
-                      { id: 1, name: 'Mar' },
-                      { id: 2, name: 'Mer' },
-                      { id: 3, name: 'Jeu' },
-                      { id: 4, name: 'Ven' },
-                      { id: 5, name: 'Sam' },
-                      { id: 6, name: 'Dim' }
-                    ].map(day => (
-                      <button
-                        key={day.id}
-                        type="button"
-                        className={`day-button ${formData.recurrence_days.includes(day.id) ? 'active' : ''}`}
-                        onClick={() => {
-                          const days = formData.recurrence_days.includes(day.id)
-                            ? formData.recurrence_days.filter(d => d !== day.id)
-                            : [...formData.recurrence_days, day.id];
-                          setFormData({ ...formData, recurrence_days: days });
-                        }}
-                      >
-                        {day.name}
-                      </button>
-                    ))}
+                      { id: 0, name: 'Lundi' },
+                      { id: 1, name: 'Mardi' },
+                      { id: 2, name: 'Mercredi' },
+                      { id: 3, name: 'Jeudi' },
+                      { id: 4, name: 'Vendredi' },
+                      { id: 5, name: 'Samedi' },
+                      { id: 6, name: 'Dimanche' }
+                    ].map(day => {
+                      const dayKey = day.id.toString();
+                      const isSelected = dayKey in formData.recurrence_schedule;
+
+                      return (
+                        <div key={day.id} className="day-schedule-card">
+                          <button
+                            type="button"
+                            className={`day-button ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              const newSchedule = {...formData.recurrence_schedule};
+                              if (isSelected) {
+                                delete newSchedule[dayKey];
+                              } else {
+                                newSchedule[dayKey] = {debut: '09:00', fin: '10:00'};
+                              }
+                              setFormData({ ...formData, recurrence_schedule: newSchedule });
+                            }}
+                          >
+                            {day.name}
+                          </button>
+
+                          {isSelected && (
+                            <div className="day-time-inputs">
+                              <input
+                                type="time"
+                                value={formData.recurrence_schedule[dayKey].debut}
+                                onChange={(e) => {
+                                  const newSchedule = {...formData.recurrence_schedule};
+                                  newSchedule[dayKey].debut = e.target.value;
+                                  setFormData({ ...formData, recurrence_schedule: newSchedule });
+                                }}
+                                className="time-input-small"
+                                placeholder="Début"
+                              />
+                              <span style={{color: '#6b7280', fontWeight: 600}}>→</span>
+                              <input
+                                type="time"
+                                value={formData.recurrence_schedule[dayKey].fin}
+                                onChange={(e) => {
+                                  const newSchedule = {...formData.recurrence_schedule};
+                                  newSchedule[dayKey].fin = e.target.value;
+                                  setFormData({ ...formData, recurrence_schedule: newSchedule });
+                                }}
+                                className="time-input-small"
+                                placeholder="Fin"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
