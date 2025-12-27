@@ -199,11 +199,17 @@
   cursor: pointer;
   transition: all 0.2s;
   color: #374151;
+  font-size: 0.95rem;
 }
 
 .rbc-toolbar button:hover {
   background: #f9fafb;
   border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.rbc-toolbar button:active {
+  transform: translateY(0);
 }
 
 .rbc-toolbar button.rbc-active {
@@ -350,32 +356,72 @@
   gap: 0.75rem;
   padding: 1rem;
   background: #f9fafb;
+  border: 2px dashed #d1d5db;
   border-radius: 12px;
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
+  min-height: 100px;
+}
+
+.no-eleves-message {
+  padding: 1.5rem;
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.no-eleves-message p {
+  color: #92400e;
+  font-weight: 500;
+  margin: 0;
+}
+
+.selected-count {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-gray-500 {
+  color: #6b7280;
+  font-weight: 400;
 }
 
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   cursor: pointer;
   font-weight: 500;
   color: #374151;
-  padding: 0.5rem;
+  padding: 0.75rem;
   border-radius: 8px;
   transition: all 0.2s;
+  background: white;
+  border: 2px solid transparent;
 }
 
 .checkbox-label:hover {
-  background: white;
+  background: #eff6ff;
+  border-color: #3b82f6;
 }
 
 .checkbox-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
   accent-color: #3b82f6;
+  flex-shrink: 0;
 }
 
 .modal-actions {

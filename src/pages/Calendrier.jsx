@@ -6,8 +6,26 @@ import 'moment/locale/fr';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendrier.css';
 
+// Configuration française pour moment et le calendrier
 moment.locale('fr');
 const localizer = momentLocalizer(moment);
+
+// Messages français personnalisés
+const messages = {
+  allDay: 'Journée',
+  previous: '←',
+  next: '→',
+  today: "Aujourd'hui",
+  month: 'Mois',
+  week: 'Semaine',
+  day: 'Jour',
+  agenda: 'Agenda',
+  date: 'Date',
+  time: 'Heure',
+  event: 'Cours',
+  noEventsInRange: 'Aucun cours pour cette période',
+  showMore: total => `+ ${total} cours`
+};
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -332,19 +350,8 @@ const Calendrier = () => {
           onView={(newView) => setView(newView)}
           date={date}
           onNavigate={(newDate) => setDate(newDate)}
-          messages={{
-            next: "Suivant",
-            previous: "Précédent",
-            today: "Aujourd'hui",
-            month: "Mois",
-            week: "Semaine",
-            day: "Jour",
-            agenda: "Agenda",
-            date: "Date",
-            time: "Heure",
-            event: "Cours",
-            noEventsInRange: "Aucun cours prévu pour cette période"
-          }}
+          messages={messages}
+          culture="fr"
         />
       </div>
 
@@ -375,31 +382,40 @@ const Calendrier = () => {
 
               {/* Sélection multi-élèves */}
               <div className="form-group">
-                <label>👥 Élève(s) *</label>
-                <div className="eleves-selector">
-                  {eleves.map(eleve => (
-                    <label key={eleve.id} className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={formData.eleve_ids.includes(eleve.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData({
-                              ...formData,
-                              eleve_ids: [...formData.eleve_ids, eleve.id]
-                            });
-                          } else {
-                            setFormData({
-                              ...formData,
-                              eleve_ids: formData.eleve_ids.filter(id => id !== eleve.id)
-                            });
-                          }
-                        }}
-                      />
-                      {eleve.prenom} {eleve.nom}
-                    </label>
-                  ))}
-                </div>
+                <label>👥 Élève(s) * <span className="text-sm text-gray-500">(cochez un ou plusieurs élèves)</span></label>
+                {eleves.length === 0 ? (
+                  <div className="no-eleves-message">
+                    <p>⚠️ Aucun élève disponible. Veuillez d'abord ajouter des élèves à votre liste.</p>
+                  </div>
+                ) : (
+                  <div className="eleves-selector">
+                    {eleves.map(eleve => (
+                      <label key={eleve.id} className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={formData.eleve_ids.includes(eleve.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                eleve_ids: [...formData.eleve_ids, eleve.id]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                eleve_ids: formData.eleve_ids.filter(id => id !== eleve.id)
+                              });
+                            }
+                          }}
+                        />
+                        {eleve.prenom} {eleve.nom}
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {formData.eleve_ids.length > 0 && (
+                  <p className="selected-count">✓ {formData.eleve_ids.length} élève(s) sélectionné(s)</p>
+                )}
               </div>
 
               <div className="form-row">
