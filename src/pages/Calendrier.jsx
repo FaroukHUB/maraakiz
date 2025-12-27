@@ -52,7 +52,8 @@ const Calendrier = () => {
     type_cours: 'presentiel',
     lien_visio: '',
     trame_cours_id: null,
-    sync_to_google: true
+    sync_to_google: true,
+    statut: 'planifie'
   });
 
   useEffect(() => {
@@ -171,7 +172,8 @@ const Calendrier = () => {
       type_cours: event.resource.type_cours || 'presentiel',
       lien_visio: event.resource.lien_visio || '',
       trame_cours_id: event.resource.trame_cours_id,
-      sync_to_google: event.resource.sync_to_google
+      sync_to_google: event.resource.sync_to_google,
+      statut: event.resource.statut || 'planifie'
     });
 
     setShowModal(true);
@@ -251,7 +253,8 @@ const Calendrier = () => {
       type_cours: 'presentiel',
       lien_visio: '',
       trame_cours_id: null,
-      sync_to_google: true
+      sync_to_google: true,
+      statut: 'planifie'
     });
     setSelectedEvent(null);
     setSelectedDate(null);
@@ -273,7 +276,11 @@ const Calendrier = () => {
   };
 
   const eventStyleGetter = (event) => {
-    const colors = {
+    const matiere = event.resource?.matiere || 'coran';
+    const statut = event.resource?.statut || 'planifie';
+
+    // Couleurs par matière
+    const matiereColors = {
       'coran': '#10b981',
       'arabe': '#3b82f6',
       'tajwid': '#8b5cf6',
@@ -281,20 +288,38 @@ const Calendrier = () => {
       'aqida': '#ef4444'
     };
 
-    const matiere = event.resource?.matiere || 'coran';
-    const backgroundColor = colors[matiere] || '#6b7280';
+    // Modifier l'opacité selon le statut
+    let backgroundColor = matiereColors[matiere] || '#6b7280';
+    let opacity = 0.9;
+    let borderLeft = '4px solid';
+    let borderColor = backgroundColor;
+
+    if (statut === 'termine') {
+      opacity = 0.5;
+      borderColor = '#10b981'; // Vert pour terminé
+    } else if (statut === 'annule') {
+      opacity = 0.3;
+      borderColor = '#ef4444'; // Rouge pour annulé
+      backgroundColor = '#d1d5db'; // Gris
+    } else if (statut === 'reporte') {
+      borderColor = '#f59e0b'; // Orange pour reporté
+    } else {
+      borderColor = '#3b82f6'; // Bleu pour planifié/à venir
+    }
 
     return {
       style: {
         backgroundColor,
-        borderRadius: '8px',
-        opacity: 0.9,
+        borderRadius: '6px',
+        opacity,
         color: 'white',
-        border: '0px',
+        border: 'none',
+        borderLeft: `${borderLeft} ${borderColor}`,
         display: 'block',
         fontWeight: '500',
         fontSize: '0.875rem',
-        padding: '4px 8px'
+        padding: '4px 8px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
       }
     };
   };
@@ -331,6 +356,29 @@ const Calendrier = () => {
           }}>
             + Nouveau cours
           </button>
+        </div>
+      </div>
+
+      {/* Légende */}
+      <div className="calendar-legend">
+        <div className="legend-title">📊 Légende</div>
+        <div className="legend-items">
+          <div className="legend-item">
+            <div className="legend-bar" style={{ backgroundColor: '#3b82f6' }}></div>
+            <span>À venir / Planifié</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-bar" style={{ backgroundColor: '#10b981', opacity: 0.5 }}></div>
+            <span>Terminé</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-bar" style={{ backgroundColor: '#f59e0b' }}></div>
+            <span>Reporté</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-bar" style={{ backgroundColor: '#d1d5db' }}></div>
+            <span>Annulé</span>
+          </div>
         </div>
       </div>
 
@@ -488,18 +536,31 @@ const Calendrier = () => {
                   </select>
                 </div>
 
-                {formData.type_cours === 'en-ligne' && (
-                  <div className="form-group">
-                    <label>Lien visio</label>
-                    <input
-                      type="url"
-                      value={formData.lien_visio}
-                      onChange={(e) => setFormData({ ...formData, lien_visio: e.target.value })}
-                      placeholder="https://meet.google.com/..."
-                    />
-                  </div>
-                )}
+                <div className="form-group">
+                  <label>Statut du cours</label>
+                  <select
+                    value={formData.statut || 'planifie'}
+                    onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
+                  >
+                    <option value="planifie">📅 Planifié / À venir</option>
+                    <option value="termine">✅ Terminé</option>
+                    <option value="annule">❌ Annulé</option>
+                    <option value="reporte">⏸️ Reporté</option>
+                  </select>
+                </div>
               </div>
+
+              {formData.type_cours === 'en-ligne' && (
+                <div className="form-group">
+                  <label>Lien visio</label>
+                  <input
+                    type="url"
+                    value={formData.lien_visio}
+                    onChange={(e) => setFormData({ ...formData, lien_visio: e.target.value })}
+                    placeholder="https://meet.google.com/..."
+                  />
+                </div>
+              )}
 
               {googleConnected && (
                 <div className="form-group">
