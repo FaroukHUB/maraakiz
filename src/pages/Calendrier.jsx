@@ -65,6 +65,7 @@ const Calendrier = () => {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('month');
   const [date, setDate] = useState(new Date());
+  const [isRecurrent, setIsRecurrent] = useState(false);  // Nouveau : toggle pour cours récurrent
 
   const [formData, setFormData] = useState({
     eleve_ids: [],
@@ -76,7 +77,10 @@ const Calendrier = () => {
     lien_visio: '',
     trame_cours_id: null,
     sync_to_google: true,
-    statut: 'planifie'
+    statut: 'planifie',
+    // Champs pour cours récurrents
+    recurrence_days: [],  // Jours de la semaine (0-6)
+    recurrence_end_date: ''  // Date de fin de la récurrence
   });
 
   useEffect(() => {
@@ -96,7 +100,7 @@ const Calendrier = () => {
       // Transformer les cours en événements pour le calendrier
       const formattedEvents = res.data.map(cours => ({
         id: cours.id,
-        title: `${cours.titre} - ${cours.eleves.map(e => e.prenom).join(', ')}`,
+        title: `${cours.is_recurrent ? '🔁 ' : ''}${cours.titre} - ${cours.eleves.map(e => e.prenom).join(', ')}`,
         start: new Date(cours.date_debut),
         end: new Date(cours.date_fin),
         resource: cours
@@ -218,46 +222,75 @@ const Calendrier = () => {
     try {
       const token = localStorage.getItem('token');
 
-      // Combiner date + heures pour créer datetime
-      const date_debut = `${formData.date}T${formData.heure_debut}`;
-      const date_fin = `${formData.date}T${formData.heure_fin}`;
-
       // Générer le titre automatiquement
       const elevesSelectionnes = eleves.filter(e => formData.eleve_ids.includes(e.id));
       const titre = elevesSelectionnes.length > 0
         ? `Cours ${formData.matiere} - ${elevesSelectionnes.map(e => e.prenom).join(', ')}`
         : `Cours ${formData.matiere}`;
 
-      // Préparer les données pour l'API
-      const dataToSend = {
-        ...formData,
-        titre,
-        date_debut,
-        date_fin,
-        type_cours: 'en-ligne' // Toujours en ligne
-      };
+      if (isRecurrent && !selectedEvent) {
+        // Créer des cours récurrents
+        const dataToSend = {
+          eleve_ids: formData.eleve_ids,
+          titre,
+          matiere: formData.matiere,
+          description: formData.description,
+          heure_debut: formData.heure_debut,
+          heure_fin: formData.heure_fin,
+          recurrence_days: formData.recurrence_days,
+          recurrence_start_date: formData.date,
+          recurrence_end_date: formData.recurrence_end_date,
+          type_cours: 'en-ligne',
+          lien_visio: formData.lien_visio,
+          trame_cours_id: formData.trame_cours_id,
+          sync_to_google: formData.sync_to_google,
+          statut: formData.statut
+        };
 
-      // Supprimer les champs temporaires
-      delete dataToSend.date;
-      delete dataToSend.heure_debut;
-      delete dataToSend.heure_fin;
-
-      if (selectedEvent) {
-        // Update existing cours
-        await axios.put(
-          `${API_URL}/api/calendrier/cours/${selectedEvent.id}`,
+        const response = await axios.post(
+          `${API_URL}/api/calendrier/cours/recurrent`,
           dataToSend,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        alert('Cours modifié avec succès !');
+
+        alert(response.data.message);
       } else {
-        // Create new cours
-        await axios.post(
-          `${API_URL}/api/calendrier/cours`,
-          dataToSend,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert('Cours créé avec succès !');
+        // Créer/modifier un cours unique
+        const date_debut = `${formData.date}T${formData.heure_debut}`;
+        const date_fin = `${formData.date}T${formData.heure_fin}`;
+
+        const dataToSend = {
+          ...formData,
+          titre,
+          date_debut,
+          date_fin,
+          type_cours: 'en-ligne'
+        };
+
+        // Supprimer les champs temporaires
+        delete dataToSend.date;
+        delete dataToSend.heure_debut;
+        delete dataToSend.heure_fin;
+        delete dataToSend.recurrence_days;
+        delete dataToSend.recurrence_end_date;
+
+        if (selectedEvent) {
+          // Update existing cours
+          await axios.put(
+            `${API_URL}/api/calendrier/cours/${selectedEvent.id}`,
+            dataToSend,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          alert('Cours modifié avec succès !');
+        } else {
+          // Create new cours
+          await axios.post(
+            `${API_URL}/api/calendrier/cours`,
+            dataToSend,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          alert('Cours créé avec succès !');
+        }
       }
 
       setShowModal(false);
@@ -300,10 +333,13 @@ const Calendrier = () => {
       lien_visio: '',
       trame_cours_id: null,
       sync_to_google: true,
-      statut: 'planifie'
+      statut: 'planifie',
+      recurrence_days: [],
+      recurrence_end_date: ''
     });
     setSelectedEvent(null);
     setSelectedDate(null);
+    setIsRecurrent(false);
   };
 
   const handleTrameSelect = (trameId) => {
@@ -507,16 +543,79 @@ const Calendrier = () => {
                 )}
               </div>
 
-              {/* Date (readonly) + Horaires */}
+              {/* Toggle Cours Récurrent */}
+              {!selectedEvent && (
+                <div className="form-group">
+                  <label className="checkbox-label recurrent-toggle">
+                    <input
+                      type="checkbox"
+                      checked={isRecurrent}
+                      onChange={(e) => setIsRecurrent(e.target.checked)}
+                    />
+                    <span style={{fontWeight: 600, fontSize: '1.05rem'}}>
+                      🔁 Cours récurrent (se répète sur plusieurs jours)
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {/* Date (readonly pour cours unique, éditable pour récurrent) + Horaires */}
               <div className="form-group">
-                <label>📅 Date</label>
+                <label>📅 {isRecurrent ? 'Date de début' : 'Date'}</label>
                 <input
                   type="date"
                   value={formData.date}
-                  readOnly
-                  className="readonly-input"
+                  onChange={isRecurrent ? (e) => setFormData({ ...formData, date: e.target.value }) : null}
+                  readOnly={!isRecurrent}
+                  className={isRecurrent ? "modern-select" : "readonly-input"}
                 />
               </div>
+
+              {/* Sélection des jours (seulement pour récurrent) */}
+              {isRecurrent && (
+                <div className="form-group">
+                  <label>📆 Jours de la semaine *</label>
+                  <div className="days-selector">
+                    {[
+                      { id: 0, name: 'Lun' },
+                      { id: 1, name: 'Mar' },
+                      { id: 2, name: 'Mer' },
+                      { id: 3, name: 'Jeu' },
+                      { id: 4, name: 'Ven' },
+                      { id: 5, name: 'Sam' },
+                      { id: 6, name: 'Dim' }
+                    ].map(day => (
+                      <button
+                        key={day.id}
+                        type="button"
+                        className={`day-button ${formData.recurrence_days.includes(day.id) ? 'active' : ''}`}
+                        onClick={() => {
+                          const days = formData.recurrence_days.includes(day.id)
+                            ? formData.recurrence_days.filter(d => d !== day.id)
+                            : [...formData.recurrence_days, day.id];
+                          setFormData({ ...formData, recurrence_days: days });
+                        }}
+                      >
+                        {day.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Date de fin (seulement pour récurrent) */}
+              {isRecurrent && (
+                <div className="form-group">
+                  <label>📅 Date de fin de la récurrence *</label>
+                  <input
+                    type="date"
+                    value={formData.recurrence_end_date}
+                    onChange={(e) => setFormData({ ...formData, recurrence_end_date: e.target.value })}
+                    required={isRecurrent}
+                    className="modern-select"
+                  />
+                </div>
+              )}
 
               <div className="form-row">
                 <div className="form-group">
