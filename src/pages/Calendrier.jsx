@@ -1,12 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendrier.css';
 
-// Import de la locale française
+// Import et activation forcée de la locale française
 import 'moment/locale/fr';
+moment.locale('fr');
+
+// Créer le localizer APRÈS avoir défini la locale
+const localizer = momentLocalizer(moment);
 
 // Messages français personnalisés
 const messages = {
@@ -48,12 +52,6 @@ const formats = {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const Calendrier = () => {
-  // Créer le localizer avec la locale française
-  const localizer = useMemo(() => {
-    moment.locale('fr');
-    return momentLocalizer(moment);
-  }, []);
-
   const [events, setEvents] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showDayView, setShowDayView] = useState(false);
