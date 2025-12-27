@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendrier.css';
 
-// Import et configuration de la locale française
+// Import de la locale française
 import 'moment/locale/fr';
-moment.locale('fr');
-const localizer = momentLocalizer(moment);
 
 // Messages français personnalisés
 const messages = {
@@ -50,6 +48,12 @@ const formats = {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const Calendrier = () => {
+  // Créer le localizer avec la locale française
+  const localizer = useMemo(() => {
+    moment.locale('fr');
+    return momentLocalizer(moment);
+  }, []);
+
   const [events, setEvents] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showDayView, setShowDayView] = useState(false);
@@ -76,9 +80,6 @@ const Calendrier = () => {
   });
 
   useEffect(() => {
-    // Forcer la locale française au montage du composant
-    moment.locale('fr');
-
     fetchCours();
     fetchEleves();
     fetchTrames();
@@ -172,7 +173,7 @@ const Calendrier = () => {
     setSelectedDate({ start, end });
     setFormData({
       ...formData,
-      date: moment(start).format('YYYY-MM-DD'),
+      date: moment(start).locale('fr').format('YYYY-MM-DD'),
       heure_debut: '09:00',
       heure_fin: '10:00'
     });
@@ -189,9 +190,9 @@ const Calendrier = () => {
       eleve_ids: event.resource.eleves.map(e => e.id),
       matiere: event.resource.matiere || 'coran',
       description: event.resource.description || '',
-      date: moment(event.resource.date_debut).format('YYYY-MM-DD'),
-      heure_debut: moment(event.resource.date_debut).format('HH:mm'),
-      heure_fin: moment(event.resource.date_fin).format('HH:mm'),
+      date: moment(event.resource.date_debut).locale('fr').format('YYYY-MM-DD'),
+      heure_debut: moment(event.resource.date_debut).locale('fr').format('HH:mm'),
+      heure_fin: moment(event.resource.date_fin).locale('fr').format('HH:mm'),
       lien_visio: event.resource.lien_visio || '',
       trame_cours_id: event.resource.trame_cours_id,
       sync_to_google: event.resource.sync_to_google,
@@ -632,7 +633,7 @@ const Calendrier = () => {
       {showDayView && (
         <div className="day-view-modal">
           <div className="day-view-content">
-            <h2>{moment(selectedDate).format('dddd D MMMM YYYY')}</h2>
+            <h2>{moment(selectedDate).locale('fr').format('dddd D MMMM YYYY')}</h2>
             {/* À implémenter: liste des cours du jour avec détails */}
           </div>
         </div>
