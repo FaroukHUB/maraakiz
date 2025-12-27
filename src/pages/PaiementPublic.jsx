@@ -20,7 +20,7 @@ const PaiementPublic = () => {
   const fetchPaymentInfo = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/paiements/pay/${token}`);
+      const response = await axios.get(`${API_BASE_URL}/api/paiements/pay/${token}`);
       setPaiement(response.data);
       setError(null);
     } catch (err) {
@@ -35,7 +35,7 @@ const PaiementPublic = () => {
     if (!confirm('Confirmer le paiement? Cette action informera votre professeur.')) return;
 
     try {
-      await axios.post(`${API_BASE_URL}/paiements/pay/${token}/confirm`, {
+      await axios.post(`${API_BASE_URL}/api/paiements/pay/${token}/confirm`, {
         methode_paiement: selectedMethod
       });
       setPaymentConfirmed(true);

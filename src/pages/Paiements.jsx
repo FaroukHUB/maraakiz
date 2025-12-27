@@ -39,13 +39,13 @@ const Paiements = () => {
       const token = localStorage.getItem('token');
 
       const [paymentsRes, elevesRes, statsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/paiements/`, {
+        axios.get(`${API_BASE_URL}/api/paiements/`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${API_BASE_URL}/eleves/`, {
+        axios.get(`${API_BASE_URL}/api/eleves/`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${API_BASE_URL}/paiements/stats/overview`, {
+        axios.get(`${API_BASE_URL}/api/paiements/stats/overview`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -67,7 +67,7 @@ const Paiements = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API_BASE_URL}/paiements/`, formData, {
+      await axios.post(`${API_BASE_URL}/api/paiements/`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -93,7 +93,7 @@ const Paiements = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${API_BASE_URL}/paiements/${paiementId}/send-link`,
+        `${API_BASE_URL}/api/paiements/${paiementId}/send-link`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -112,7 +112,7 @@ const Paiements = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${API_BASE_URL}/paiements/${paiementId}/mark-paid`,
+        `${API_BASE_URL}/api/paiements/${paiementId}/mark-paid`,
         { methode_paiement: 'especes' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -129,7 +129,7 @@ const Paiements = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_BASE_URL}/paiements/${paiementId}`, {
+      await axios.delete(`${API_BASE_URL}/api/paiements/${paiementId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
