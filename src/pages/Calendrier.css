@@ -685,3 +685,215 @@
     opacity: 1;
   }
 }
+
+/* ===== STYLES ULTRA-MODERNES POUR VUES JOUR ET SEMAINE ===== */
+
+/* Agrandir les cellules temporelles */
+.rbc-time-slot {
+  min-height: 60px !important;
+}
+
+/* Grille horaire plus visible */
+.rbc-timeslot-group {
+  min-height: 120px !important;
+  border-left: 4px solid #f3f4f6;
+}
+
+/* Horaires dans la colonne de gauche - plus gros et plus visibles */
+.rbc-time-slot .rbc-label {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  padding: 0.75rem 1rem;
+}
+
+/* En-têtes des jours dans la vue semaine - grosses cases */
+.rbc-time-header-content {
+  border-left: 4px solid #e5e7eb;
+}
+
+.rbc-time-header-cell {
+  min-height: 80px !important;
+}
+
+.rbc-header.rbc-today {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-left: 4px solid #3b82f6 !important;
+}
+
+.rbc-header {
+  padding: 1.25rem !important;
+  font-size: 1.125rem !important;
+  min-height: 80px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Événements dans les vues day/week - BEAUCOUP plus gros et visibles */
+.rbc-time-content .rbc-event {
+  border-radius: 12px !important;
+  padding: 1rem 1.25rem !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+  overflow: visible !important;
+  z-index: 4 !important;
+}
+
+.rbc-time-content .rbc-event:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+  z-index: 100 !important;
+}
+
+/* Conteneur des événements */
+.rbc-events-container {
+  margin-right: 0 !important;
+}
+
+/* Colonnes du jour dans la vue semaine - plus larges */
+.rbc-day-slot {
+  min-width: 150px;
+}
+
+/* Grille horaire de fond */
+.rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid #f3f4f6;
+}
+
+.rbc-day-slot .rbc-time-slot:hover {
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+/* Heure actuelle - ligne rouge */
+.rbc-current-time-indicator {
+  background-color: #ef4444;
+  height: 3px !important;
+  z-index: 3;
+}
+
+.rbc-current-time-indicator::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: -5px;
+  width: 12px;
+  height: 12px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Gutters (colonne horaire) plus large et stylée */
+.rbc-time-gutter {
+  background: linear-gradient(to right, #ffffff 0%, #f9fafb 100%);
+  border-right: 3px solid #e5e7eb;
+  min-width: 100px !important;
+}
+
+/* Contenu de la vue temporelle */
+.rbc-time-content {
+  border-top: 3px solid #e5e7eb;
+}
+
+/* Colonnes séparées par des bordures plus visibles */
+.rbc-day-slot .rbc-events-container {
+  margin-right: 10px;
+}
+
+.rbc-time-column {
+  border-left: 2px solid #e5e7eb;
+}
+
+.rbc-time-column:first-child {
+  border-left: none;
+}
+
+/* Label de l'événement - amélioration de la lisibilité */
+.rbc-event-label {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  opacity: 0.9;
+  margin-bottom: 0.25rem;
+}
+
+.rbc-event-content {
+  font-size: 1rem !important;
+  line-height: 1.4;
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+/* Vue Agenda - amélioration */
+.rbc-agenda-view {
+  padding: 1rem;
+}
+
+.rbc-agenda-view table {
+  border: none;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+
+.rbc-agenda-view tbody > tr {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.rbc-agenda-view tbody > tr > td {
+  padding: 1rem 1.25rem;
+  border: none;
+}
+
+.rbc-agenda-date-cell {
+  font-weight: 600;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.rbc-agenda-time-cell {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.rbc-agenda-event-cell {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+/* Amélioration responsive pour vues day/week */
+@media (max-width: 768px) {
+  .rbc-time-slot {
+    min-height: 50px !important;
+  }
+
+  .rbc-timeslot-group {
+    min-height: 100px !important;
+  }
+
+  .rbc-time-slot .rbc-label {
+    font-size: 0.95rem;
+    padding: 0.5rem;
+  }
+
+  .rbc-header {
+    font-size: 1rem !important;
+    padding: 1rem !important;
+    min-height: 60px !important;
+  }
+
+  .rbc-time-content .rbc-event {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .rbc-time-gutter {
+    min-width: 70px !important;
+  }
+}
