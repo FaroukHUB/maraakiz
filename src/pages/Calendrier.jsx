@@ -6,8 +6,7 @@ import 'moment/locale/fr';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendrier.css';
 
-// Forcer la configuration française pour moment
-require('moment/locale/fr');
+// Configuration française pour moment
 moment.locale('fr');
 const localizer = momentLocalizer(moment);
 
