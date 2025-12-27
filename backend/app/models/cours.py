@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Table, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -41,6 +41,12 @@ class Cours(Base):
     # Google Calendar Integration
     google_event_id = Column(String(255), nullable=True, index=True)  # ID de l'événement Google Calendar
     sync_to_google = Column(Boolean, default=True)  # Synchroniser avec Google Calendar
+
+    # Récurrence (cours répétés)
+    is_recurrent = Column(Boolean, default=False)  # Ce cours fait partie d'une série récurrente
+    recurrence_parent_id = Column(Integer, ForeignKey('cours.id', ondelete='CASCADE'), nullable=True, index=True)  # ID du cours "parent" de la série
+    recurrence_rule = Column(JSON, nullable=True)  # Règle de récurrence : {"days": [1,4,6], "start_date": "2025-01-01", "end_date": "2025-02-28"}
+    recurrence_exceptions = Column(JSON, nullable=True)  # Liste des dates où le cours est annulé : ["2025-01-15", "2025-02-03"]
 
     # Lien vers trame de cours (template)
     trame_cours_id = Column(Integer, ForeignKey('trames_cours.id', ondelete='SET NULL'), nullable=True)

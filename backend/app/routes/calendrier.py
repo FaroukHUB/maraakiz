@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, extract
 from typing import List, Optional
 from pydantic import BaseModel
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import secrets
 import json
 
@@ -60,6 +60,30 @@ class CoursUpdate(BaseModel):
     fichiers_urls: Optional[str] = None
 
 
+class RecurrentCoursCreate(BaseModel):
+    """Schéma pour créer des cours récurrents"""
+    eleve_ids: List[int]  # Élèves du groupe
+    titre: str
+    matiere: Optional[str] = None
+    description: Optional[str] = None
+
+    # Horaires (heure uniquement, sera appliqué à chaque jour)
+    heure_debut: str  # Format "HH:MM" ex: "20:00"
+    heure_fin: str    # Format "HH:MM" ex: "21:00"
+
+    # Récurrence
+    recurrence_days: List[int]  # Jours de la semaine (0=Lundi, 1=Mardi... 6=Dimanche)
+    recurrence_start_date: date  # Date de début de la récurrence
+    recurrence_end_date: date    # Date de fin de la récurrence
+
+    # Autres champs
+    type_cours: Optional[str] = "en-ligne"
+    lien_visio: Optional[str] = None
+    trame_cours_id: Optional[int] = None
+    sync_to_google: bool = True
+    statut: Optional[str] = "planifie"
+
+
 class CoursResponse(BaseModel):
     id: int
     merkez_id: int
@@ -74,6 +98,10 @@ class CoursResponse(BaseModel):
     statut: str
     google_event_id: Optional[str]
     sync_to_google: bool
+    is_recurrent: Optional[bool] = False
+    recurrence_parent_id: Optional[int] = None
+    recurrence_rule: Optional[dict] = None
+    recurrence_exceptions: Optional[list] = None
     trame_cours_id: Optional[int]
     notes_prof: Optional[str]
     devoirs: Optional[str]
@@ -397,6 +425,131 @@ async def create_cours(
     return {
         **new_cours.__dict__,
         "eleves": eleves_data
+    }
+
+
+@router.post("/cours/recurrent", status_code=status.HTTP_201_CREATED)
+async def create_recurrent_cours(
+    recurrent_data: RecurrentCoursCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create recurrent cours (ex: Tous les lundis, jeudis et samedis de 20h à 21h pour janvier et février)
+    Génère automatiquement tous les cours de la série
+    """
+    if not current_user.merkez_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous devez être professeur"
+        )
+
+    # Vérifier que tous les élèves existent
+    eleves = []
+    for eleve_id in recurrent_data.eleve_ids:
+        eleve = db.query(Eleve).filter(
+            Eleve.id == eleve_id,
+            Eleve.merkez_id == current_user.merkez_id
+        ).first()
+        if not eleve:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Élève {eleve_id} non trouvé"
+            )
+        eleves.append(eleve)
+
+    # Générer toutes les occurrences
+    cours_created = []
+    current_date = recurrent_data.recurrence_start_date
+
+    # Règle de récurrence à stocker
+    recurrence_rule = {
+        "days": recurrent_data.recurrence_days,
+        "start_date": recurrent_data.recurrence_start_date.isoformat(),
+        "end_date": recurrent_data.recurrence_end_date.isoformat(),
+        "heure_debut": recurrent_data.heure_debut,
+        "heure_fin": recurrent_data.heure_fin
+    }
+
+    # ID du cours parent (sera le premier cours créé)
+    parent_cours_id = None
+
+    while current_date <= recurrent_data.recurrence_end_date:
+        # Vérifier si ce jour de la semaine est dans la liste (0=Lundi, 6=Dimanche)
+        weekday = current_date.weekday()
+
+        if weekday in recurrent_data.recurrence_days:
+            # Créer datetime complets
+            heure_debut_parts = recurrent_data.heure_debut.split(':')
+            heure_fin_parts = recurrent_data.heure_fin.split(':')
+
+            date_debut = datetime.combine(
+                current_date,
+                datetime.min.time().replace(
+                    hour=int(heure_debut_parts[0]),
+                    minute=int(heure_debut_parts[1])
+                )
+            )
+            date_fin = datetime.combine(
+                current_date,
+                datetime.min.time().replace(
+                    hour=int(heure_fin_parts[0]),
+                    minute=int(heure_fin_parts[1])
+                )
+            )
+
+            # Calculer la durée
+            duree = int((date_fin - date_debut).total_seconds() / 60)
+
+            # Créer le cours
+            new_cours = Cours(
+                merkez_id=current_user.merkez_id,
+                titre=recurrent_data.titre,
+                matiere=recurrent_data.matiere,
+                description=recurrent_data.description,
+                date_debut=date_debut,
+                date_fin=date_fin,
+                duree=duree,
+                type_cours=recurrent_data.type_cours,
+                lien_visio=recurrent_data.lien_visio,
+                trame_cours_id=recurrent_data.trame_cours_id,
+                sync_to_google=recurrent_data.sync_to_google,
+                statut=recurrent_data.statut,
+                is_recurrent=True,
+                recurrence_rule=recurrence_rule,
+                recurrence_parent_id=parent_cours_id  # None pour le premier, ID du parent pour les suivants
+            )
+
+            db.add(new_cours)
+            db.flush()  # Get the ID
+
+            # Si c'est le premier cours, il devient le parent
+            if parent_cours_id is None:
+                parent_cours_id = new_cours.id
+                new_cours.recurrence_parent_id = new_cours.id  # Le parent se référence lui-même
+
+            # Associer les élèves
+            for eleve in eleves:
+                db.execute(
+                    cours_eleves.insert().values(
+                        cours_id=new_cours.id,
+                        eleve_id=eleve.id,
+                        presente=False
+                    )
+                )
+
+            cours_created.append(new_cours.id)
+
+        # Jour suivant
+        current_date += timedelta(days=1)
+
+    db.commit()
+
+    return {
+        "message": f"{len(cours_created)} cours créés avec succès",
+        "cours_ids": cours_created,
+        "parent_id": parent_cours_id,
+        "recurrence_rule": recurrence_rule
     }
 
 
