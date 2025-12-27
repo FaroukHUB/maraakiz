@@ -36,6 +36,12 @@ class Paiement(Base):
     rappel_envoye = Column(Boolean, default=False)
     date_rappel = Column(DateTime(timezone=True), nullable=True)
 
+    # Liens de paiement
+    lien_paiement = Column(String(500), nullable=True)  # Token unique pour le lien
+    lien_expiration = Column(DateTime(timezone=True), nullable=True)  # Expiration du lien
+    email_envoye = Column(Boolean, default=False)  # Email de demande envoyé
+    date_email = Column(DateTime(timezone=True), nullable=True)  # Date d'envoi de l'email
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

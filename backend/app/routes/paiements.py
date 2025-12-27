@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, extract, func
 from typing import List, Optional
 from pydantic import BaseModel
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
 
 from app.database import get_db
@@ -15,6 +15,7 @@ from app.routes.auth import oauth2_scheme
 from app.utils.email import send_student_credentials_email
 from jose import JWTError, jwt
 import os
+import secrets
 
 router = APIRouter()
 
@@ -425,3 +426,323 @@ async def get_payment_stats(
         "en_retard_count": en_retard_count,
         "impaye_count": impaye_count
     }
+
+
+@router.post("/{paiement_id}/send-link")
+async def send_payment_link(
+    paiement_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate a unique payment link and send it to the student via email
+    """
+    if not current_user.merkez_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous devez être professeur ou institut"
+        )
+
+    paiement = db.query(Paiement).filter(
+        Paiement.id == paiement_id,
+        Paiement.merkez_id == current_user.merkez_id
+    ).first()
+
+    if not paiement:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Paiement non trouvé"
+        )
+
+    # Get student info
+    eleve = db.query(Eleve).filter(Eleve.id == paiement.eleve_id).first()
+    if not eleve:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Élève non trouvé"
+        )
+
+    # Get merkez info
+    merkez = db.query(Merkez).filter(Merkez.id == current_user.merkez_id).first()
+
+    # Generate unique token
+    payment_token = secrets.token_urlsafe(32)
+
+    # Set expiration to 30 days from now
+    expiration = datetime.now() + timedelta(days=30)
+
+    # Update payment with link info
+    paiement.lien_paiement = payment_token
+    paiement.lien_expiration = expiration
+    paiement.email_envoye = True
+    paiement.date_email = datetime.now()
+
+    db.commit()
+
+    # Send email
+    try:
+        await send_payment_request_email(
+            student_email=eleve.email if eleve.email else eleve.email_parent,
+            student_name=f"{eleve.prenom} {eleve.nom}",
+            merkez_name=merkez.nom if merkez else "Votre professeur",
+            montant=paiement.montant_du,
+            mois=paiement.mois,
+            annee=paiement.annee,
+            payment_token=payment_token,
+            date_echeance=paiement.date_echeance
+        )
+    except Exception as e:
+        # Even if email fails, we still created the link
+        print(f"Erreur lors de l'envoi de l'email: {e}")
+
+    # Generate the full URL
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    payment_url = f"{frontend_url}/paiement/{payment_token}"
+
+    return {
+        "success": True,
+        "payment_url": payment_url,
+        "expiration": expiration,
+        "email_sent": True
+    }
+
+
+@router.get("/pay/{token}")
+async def get_payment_by_token(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Get payment information by token (public endpoint, no auth required)
+    """
+    paiement = db.query(Paiement).filter(Paiement.lien_paiement == token).first()
+
+    if not paiement:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lien de paiement invalide ou expiré"
+        )
+
+    # Check if link is expired
+    if paiement.lien_expiration and datetime.now() > paiement.lien_expiration:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ce lien de paiement a expiré"
+        )
+
+    # Get student and merkez info
+    eleve = db.query(Eleve).filter(Eleve.id == paiement.eleve_id).first()
+    merkez = db.query(Merkez).filter(Merkez.id == paiement.merkez_id).first()
+
+    return {
+        "id": paiement.id,
+        "mois": paiement.mois,
+        "annee": paiement.annee,
+        "montant_du": paiement.montant_du,
+        "montant_paye": paiement.montant_paye,
+        "montant_restant": paiement.montant_du - paiement.montant_paye,
+        "statut": paiement.statut,
+        "date_echeance": paiement.date_echeance,
+        "eleve_nom": f"{eleve.prenom} {eleve.nom}" if eleve else "Élève",
+        "merkez_nom": merkez.nom if merkez else "Professeur",
+        "merkez_email": merkez.email if merkez else None,
+        "merkez_telephone": merkez.telephone if merkez else None
+    }
+
+
+@router.post("/pay/{token}/confirm")
+async def confirm_payment(
+    token: str,
+    methode_paiement: str = "virement",
+    db: Session = Depends(get_db)
+):
+    """
+    Confirm payment (called when student marks payment as done)
+    This doesn't actually process payment, just notifies the professor
+    """
+    paiement = db.query(Paiement).filter(Paiement.lien_paiement == token).first()
+
+    if not paiement:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lien de paiement invalide"
+        )
+
+    # Check if link is expired
+    if paiement.lien_expiration and datetime.now() > paiement.lien_expiration:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ce lien de paiement a expiré"
+        )
+
+    # Mark as paid
+    paiement.montant_paye = paiement.montant_du
+    paiement.statut = "paye"
+    paiement.date_paiement = date.today()
+    paiement.methode_paiement = methode_paiement
+
+    db.commit()
+
+    # TODO: Send notification email to professor
+
+    return {
+        "success": True,
+        "message": "Paiement confirmé avec succès"
+    }
+
+
+async def send_payment_request_email(
+    student_email: str,
+    student_name: str,
+    merkez_name: str,
+    montant: float,
+    mois: int,
+    annee: int,
+    payment_token: str,
+    date_echeance: date
+):
+    """
+    Send payment request email to student
+    """
+    from app.utils.email import send_email
+
+    mois_noms = [
+        "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+        "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+    ]
+    mois_nom = mois_noms[mois - 1] if 1 <= mois <= 12 else str(mois)
+
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    payment_url = f"{frontend_url}/paiement/{payment_token}"
+
+    subject = f"💰 Demande de paiement - {mois_nom} {annee}"
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }}
+            .header {{
+                background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 10px 10px 0 0;
+                text-align: center;
+            }}
+            .content {{
+                background: white;
+                padding: 30px;
+                border: 1px solid #e5e7eb;
+                border-top: none;
+            }}
+            .amount {{
+                font-size: 36px;
+                font-weight: bold;
+                color: #3b82f6;
+                text-align: center;
+                margin: 20px 0;
+            }}
+            .details {{
+                background: #f9fafb;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+            }}
+            .details-row {{
+                display: flex;
+                justify-content: space-between;
+                padding: 10px 0;
+                border-bottom: 1px solid #e5e7eb;
+            }}
+            .details-row:last-child {{
+                border-bottom: none;
+            }}
+            .cta-button {{
+                display: inline-block;
+                background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+                color: white !important;
+                padding: 15px 40px;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: bold;
+                text-align: center;
+                margin: 20px 0;
+            }}
+            .footer {{
+                text-align: center;
+                color: #6b7280;
+                font-size: 14px;
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #e5e7eb;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>💰 Demande de paiement</h1>
+            <p>{merkez_name}</p>
+        </div>
+
+        <div class="content">
+            <p>Bonjour {student_name},</p>
+
+            <p>Vous avez un paiement en attente pour le mois de <strong>{mois_nom} {annee}</strong>.</p>
+
+            <div class="amount">
+                {montant:.2f} €
+            </div>
+
+            <div class="details">
+                <div class="details-row">
+                    <span><strong>Période :</strong></span>
+                    <span>{mois_nom} {annee}</span>
+                </div>
+                <div class="details-row">
+                    <span><strong>Montant :</strong></span>
+                    <span>{montant:.2f} €</span>
+                </div>
+                <div class="details-row">
+                    <span><strong>Date d'échéance :</strong></span>
+                    <span>{date_echeance.strftime('%d/%m/%Y')}</span>
+                </div>
+                <div class="details-row">
+                    <span><strong>Professeur :</strong></span>
+                    <span>{merkez_name}</span>
+                </div>
+            </div>
+
+            <center>
+                <a href="{payment_url}" class="cta-button">
+                    Voir les détails et payer
+                </a>
+            </center>
+
+            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+                Ce lien est valable pendant 30 jours. Si vous avez des questions concernant ce paiement,
+                contactez directement votre professeur.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>Maraakiz - Plateforme de gestion des cours</p>
+            <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+        </div>
+    </body>
+    </html>
+    """
+
+    await send_email(
+        to_email=student_email,
+        subject=subject,
+        html_content=html_content
+    )

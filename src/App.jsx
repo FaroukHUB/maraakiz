@@ -21,6 +21,8 @@ import CRM from "./pages/CRM.jsx";
 import Eleves from "./pages/Eleves.jsx";
 import Eleve from "./pages/Eleve.jsx";
 import ProfProfile from "./pages/ProfProfile.jsx";
+import Paiements from "./pages/Paiements.jsx";
+import PaiementPublic from "./pages/PaiementPublic.jsx";
 
 import CRMLayout from "./layouts/CRMLayout";
 
@@ -44,6 +46,7 @@ function App() {
         <Route path="/dashboard/eleves/:id/modifier" element={<DashboardEleveForm />} />
         <Route path="/dashboard/profil" element={<DashboardProfil />} />
         <Route path="/dashboard/calendrier" element={<DashboardCalendrier />} />
+        <Route path="/dashboard/paiements" element={<Paiements />} />
         <Route path="/dashboard/messages" element={<DashboardMessages />} />
         <Route path="/dashboard/messages/:userId" element={<DashboardMessages />} />
 
@@ -54,6 +57,9 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/inscription" element={<Inscription />} />
         <Route path="/admin-ajout-prof" element={<AdminAddProfPage />} />
+
+        {/* Public payment page */}
+        <Route path="/paiement/:token" element={<PaiementPublic />} />
 
         {/* CRM */}
         <Route path="/crm" element={<CRM />} />
