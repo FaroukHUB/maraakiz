@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
-import 'moment/locale/fr';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendrier.css';
 
-// Configuration française pour moment
+// Import et configuration de la locale française
+import 'moment/locale/fr';
 moment.locale('fr');
 const localizer = momentLocalizer(moment);
 
@@ -29,22 +29,22 @@ const messages = {
 
 // Formats français pour les en-têtes du calendrier
 const formats = {
-  monthHeaderFormat: (date) => moment(date).format('MMMM YYYY'),
-  dayHeaderFormat: (date) => moment(date).format('dddd D MMMM YYYY'),
+  monthHeaderFormat: (date) => moment(date).locale('fr').format('MMMM YYYY'),
+  dayHeaderFormat: (date) => moment(date).locale('fr').format('dddd D MMMM YYYY'),
   dayRangeHeaderFormat: ({ start, end }) =>
-    `${moment(start).format('D MMMM')} - ${moment(end).format('D MMMM YYYY')}`,
+    `${moment(start).locale('fr').format('D MMMM')} - ${moment(end).locale('fr').format('D MMMM YYYY')}`,
   agendaHeaderFormat: ({ start, end }) =>
-    `${moment(start).format('D MMMM')} - ${moment(end).format('D MMMM YYYY')}`,
-  weekdayFormat: (date) => moment(date).format('dddd'),
-  dateFormat: (date) => moment(date).format('D'),
-  dayFormat: (date) => moment(date).format('DD ddd'),
-  timeGutterFormat: (date) => moment(date).format('HH:mm'),
+    `${moment(start).locale('fr').format('D MMMM')} - ${moment(end).locale('fr').format('D MMMM YYYY')}`,
+  weekdayFormat: (date) => moment(date).locale('fr').format('dddd'),
+  dateFormat: (date) => moment(date).locale('fr').format('D'),
+  dayFormat: (date) => moment(date).locale('fr').format('DD ddd'),
+  timeGutterFormat: (date) => moment(date).locale('fr').format('HH:mm'),
   eventTimeRangeFormat: ({ start, end }) =>
-    `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`,
-  agendaDateFormat: (date) => moment(date).format('ddd D MMM'),
-  agendaTimeFormat: (date) => moment(date).format('HH:mm'),
+    `${moment(start).locale('fr').format('HH:mm')} - ${moment(end).locale('fr').format('HH:mm')}`,
+  agendaDateFormat: (date) => moment(date).locale('fr').format('ddd D MMM'),
+  agendaTimeFormat: (date) => moment(date).locale('fr').format('HH:mm'),
   agendaTimeRangeFormat: ({ start, end }) =>
-    `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`,
+    `${moment(start).locale('fr').format('HH:mm')} - ${moment(end).locale('fr').format('HH:mm')}`,
 };
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
