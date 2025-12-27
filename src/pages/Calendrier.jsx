@@ -5,8 +5,10 @@ import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendrier.css';
 
-// Import et activation forcée de la locale française
-import 'moment/locale/fr';
+// Import explicite de la locale française
+import 'moment/dist/locale/fr';
+
+// Forcer la locale française
 moment.locale('fr');
 
 // Créer le localizer APRÈS avoir défini la locale
@@ -31,22 +33,22 @@ const messages = {
 
 // Formats français pour les en-têtes du calendrier
 const formats = {
-  monthHeaderFormat: (date) => moment(date).locale('fr').format('MMMM YYYY'),
-  dayHeaderFormat: (date) => moment(date).locale('fr').format('dddd D MMMM YYYY'),
+  monthHeaderFormat: (date) => moment(date).format('MMMM YYYY'),
+  dayHeaderFormat: (date) => moment(date).format('dddd D MMMM YYYY'),
   dayRangeHeaderFormat: ({ start, end }) =>
-    `${moment(start).locale('fr').format('D MMMM')} - ${moment(end).locale('fr').format('D MMMM YYYY')}`,
+    `${moment(start).format('D MMMM')} - ${moment(end).format('D MMMM YYYY')}`,
   agendaHeaderFormat: ({ start, end }) =>
-    `${moment(start).locale('fr').format('D MMMM')} - ${moment(end).locale('fr').format('D MMMM YYYY')}`,
-  weekdayFormat: (date) => moment(date).locale('fr').format('dddd'),
-  dateFormat: (date) => moment(date).locale('fr').format('D'),
-  dayFormat: (date) => moment(date).locale('fr').format('DD ddd'),
-  timeGutterFormat: (date) => moment(date).locale('fr').format('HH:mm'),
+    `${moment(start).format('D MMMM')} - ${moment(end).format('D MMMM YYYY')}`,
+  weekdayFormat: (date) => moment(date).format('dddd'),
+  dateFormat: (date) => moment(date).format('D'),
+  dayFormat: (date) => moment(date).format('DD ddd'),
+  timeGutterFormat: (date) => moment(date).format('HH:mm'),
   eventTimeRangeFormat: ({ start, end }) =>
-    `${moment(start).locale('fr').format('HH:mm')} - ${moment(end).locale('fr').format('HH:mm')}`,
-  agendaDateFormat: (date) => moment(date).locale('fr').format('ddd D MMM'),
-  agendaTimeFormat: (date) => moment(date).locale('fr').format('HH:mm'),
+    `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`,
+  agendaDateFormat: (date) => moment(date).format('ddd D MMM'),
+  agendaTimeFormat: (date) => moment(date).format('HH:mm'),
   agendaTimeRangeFormat: ({ start, end }) =>
-    `${moment(start).locale('fr').format('HH:mm')} - ${moment(end).locale('fr').format('HH:mm')}`,
+    `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`,
 };
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -171,7 +173,7 @@ const Calendrier = () => {
     setSelectedDate({ start, end });
     setFormData({
       ...formData,
-      date: moment(start).locale('fr').format('YYYY-MM-DD'),
+      date: moment(start).format('YYYY-MM-DD'),
       heure_debut: '09:00',
       heure_fin: '10:00'
     });
@@ -188,9 +190,9 @@ const Calendrier = () => {
       eleve_ids: event.resource.eleves.map(e => e.id),
       matiere: event.resource.matiere || 'coran',
       description: event.resource.description || '',
-      date: moment(event.resource.date_debut).locale('fr').format('YYYY-MM-DD'),
-      heure_debut: moment(event.resource.date_debut).locale('fr').format('HH:mm'),
-      heure_fin: moment(event.resource.date_fin).locale('fr').format('HH:mm'),
+      date: moment(event.resource.date_debut).format('YYYY-MM-DD'),
+      heure_debut: moment(event.resource.date_debut).format('HH:mm'),
+      heure_fin: moment(event.resource.date_fin).format('HH:mm'),
       lien_visio: event.resource.lien_visio || '',
       trame_cours_id: event.resource.trame_cours_id,
       sync_to_google: event.resource.sync_to_google,
@@ -631,7 +633,7 @@ const Calendrier = () => {
       {showDayView && (
         <div className="day-view-modal">
           <div className="day-view-content">
-            <h2>{moment(selectedDate).locale('fr').format('dddd D MMMM YYYY')}</h2>
+            <h2>{moment(selectedDate).format('dddd D MMMM YYYY')}</h2>
             {/* À implémenter: liste des cours du jour avec détails */}
           </div>
         </div>
