@@ -27,6 +27,16 @@ const messages = {
   showMore: total => `+ ${total} cours`
 };
 
+// Formats français pour les en-têtes du calendrier
+const formats = {
+  monthHeaderFormat: 'MMMM YYYY',
+  dayHeaderFormat: 'dddd D MMMM',
+  dayRangeHeaderFormat: ({ start, end }) =>
+    `${moment(start).format('D MMMM')} - ${moment(end).format('D MMMM YYYY')}`,
+  agendaHeaderFormat: ({ start, end }) =>
+    `${moment(start).format('D MMMM')} - ${moment(end).format('D MMMM YYYY')}`,
+};
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const Calendrier = () => {
@@ -413,6 +423,7 @@ const Calendrier = () => {
           date={date}
           onNavigate={(newDate) => setDate(newDate)}
           messages={messages}
+          formats={formats}
           culture="fr"
         />
       </div>
