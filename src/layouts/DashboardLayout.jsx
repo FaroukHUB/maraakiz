@@ -45,9 +45,9 @@ const DashboardLayout = ({ children }) => {
     { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
     { name: "Mes élèves", path: "/dashboard/eleves", icon: Users },
     { name: "Calendrier", path: "/dashboard/calendrier", icon: Calendar },
+    { name: "Paiements", path: "/dashboard/paiements", icon: CreditCard },
     { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
     { name: "Mon profil", path: "/dashboard/profil", icon: User },
-    { name: "Abonnement", path: "/dashboard/abonnement", icon: CreditCard },
     { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
   ];
 

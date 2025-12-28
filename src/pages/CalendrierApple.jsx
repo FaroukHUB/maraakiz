@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import moment from 'moment';
 import 'moment/dist/locale/fr';
+import DashboardLayout from '../layouts/DashboardLayout';
 import './CalendrierApple.css';
 
 moment.locale('fr');
@@ -89,9 +90,10 @@ const CalendrierApple = () => {
   };
 
   return (
-    <div className="apple-calendar">
-      {/* Toolbar */}
-      <div className="cal-toolbar">
+    <DashboardLayout>
+      <div className="apple-calendar">
+        {/* Toolbar */}
+        <div className="cal-toolbar">
         <div className="toolbar-left">
           <button className="btn-today" onClick={goToday}>Aujourd'hui</button>
           <div className="toolbar-nav">
@@ -134,7 +136,8 @@ const CalendrierApple = () => {
       {showModal && selectedCours && (
         <CoursModal cours={selectedCours} onClose={() => { setShowModal(false); setSelectedCours(null); }} onUpdate={fetchCours} />
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
