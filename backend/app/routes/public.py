@@ -163,5 +163,12 @@ def get_merkez_detail(merkez_id: int, db: Session = Depends(get_db)):
         "verifie": merkez.verifie,
         "nouveau": merkez.nouveau,
         "nombreEleves": merkez.nombre_eleves,
-        "nombreCoursDonnes": merkez.nombre_cours_donnes
+        "nombreCoursDonnes": merkez.nombre_cours_donnes,
+        # Réseaux sociaux
+        "siteWeb": merkez.site_web,
+        "facebook": merkez.facebook,
+        "instagram": merkez.instagram,
+        "linkedin": merkez.linkedin,
+        "twitter": merkez.twitter,
+        "youtube": merkez.youtube
     }

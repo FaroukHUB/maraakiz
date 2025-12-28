@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Star, MapPin, Video, Clock, Users, Shield, CheckCircle, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Star, MapPin, Video, Clock, Users, Shield, CheckCircle, Mail, Phone, Globe, Facebook, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
 import Header from "../components/Header";
 
 const API_URL = "http://127.0.0.1:8000";
@@ -386,6 +386,116 @@ const ProfProfile = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Réseaux sociaux & site web */}
+              {(prof.siteWeb || prof.facebook || prof.instagram || prof.linkedin || prof.twitter || prof.youtube) && (
+                <div className="bg-white rounded-2xl shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">🌐 Suivez-nous</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {prof.siteWeb && (
+                      <a
+                        href={prof.siteWeb}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all border-2 border-gray-200 hover:border-[#437C8B] group"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 bg-gray-600 group-hover:bg-gray-700 rounded-full flex items-center justify-center transition-colors">
+                          <Globe size={20} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-900">Site Web</div>
+                          <div className="text-xs text-gray-600 truncate">Visiter</div>
+                        </div>
+                      </a>
+                    )}
+
+                    {prof.facebook && (
+                      <a
+                        href={prof.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all border-2 border-blue-200 hover:border-blue-500 group"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 bg-blue-600 group-hover:bg-blue-700 rounded-full flex items-center justify-center transition-colors">
+                          <Facebook size={20} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-900">Facebook</div>
+                          <div className="text-xs text-blue-600 truncate">Suivre</div>
+                        </div>
+                      </a>
+                    )}
+
+                    {prof.instagram && (
+                      <a
+                        href={prof.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-4 bg-pink-50 hover:bg-pink-100 rounded-xl transition-all border-2 border-pink-200 hover:border-pink-500 group"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 group-hover:from-purple-700 group-hover:to-pink-700 rounded-full flex items-center justify-center transition-all">
+                          <Instagram size={20} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-900">Instagram</div>
+                          <div className="text-xs text-pink-600 truncate">Suivre</div>
+                        </div>
+                      </a>
+                    )}
+
+                    {prof.linkedin && (
+                      <a
+                        href={prof.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all border-2 border-blue-200 hover:border-blue-700 group"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 bg-blue-700 group-hover:bg-blue-800 rounded-full flex items-center justify-center transition-colors">
+                          <Linkedin size={20} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-900">LinkedIn</div>
+                          <div className="text-xs text-blue-700 truncate">Connecter</div>
+                        </div>
+                      </a>
+                    )}
+
+                    {prof.twitter && (
+                      <a
+                        href={prof.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-4 bg-sky-50 hover:bg-sky-100 rounded-xl transition-all border-2 border-sky-200 hover:border-sky-500 group"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 bg-sky-500 group-hover:bg-sky-600 rounded-full flex items-center justify-center transition-colors">
+                          <Twitter size={20} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-900">Twitter</div>
+                          <div className="text-xs text-sky-600 truncate">Suivre</div>
+                        </div>
+                      </a>
+                    )}
+
+                    {prof.youtube && (
+                      <a
+                        href={prof.youtube}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-4 bg-red-50 hover:bg-red-100 rounded-xl transition-all border-2 border-red-200 hover:border-red-500 group"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 bg-red-600 group-hover:bg-red-700 rounded-full flex items-center justify-center transition-colors">
+                          <Youtube size={20} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-900">YouTube</div>
+                          <div className="text-xs text-red-600 truncate">S'abonner</div>
+                        </div>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
