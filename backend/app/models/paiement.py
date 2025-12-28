@@ -42,6 +42,10 @@ class Paiement(Base):
     email_envoye = Column(Boolean, default=False)  # Email de demande envoyé
     date_email = Column(DateTime(timezone=True), nullable=True)  # Date d'envoi de l'email
 
+    # Archivage
+    archived = Column(Boolean, default=False)  # Paiement archivé
+    archived_at = Column(DateTime(timezone=True), nullable=True)  # Date d'archivage
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

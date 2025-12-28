@@ -115,6 +115,7 @@ async def get_paiements(
     statut: Optional[str] = Query(None),
     mois: Optional[int] = Query(None),
     annee: Optional[int] = Query(None),
+    include_archived: bool = Query(False),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -127,8 +128,11 @@ async def get_paiements(
             detail="Vous devez être professeur ou institut"
         )
 
-    # Base query
+    # Base query - exclude archived by default
     query = db.query(Paiement).filter(Paiement.merkez_id == current_user.merkez_id)
+
+    if not include_archived:
+        query = query.filter(Paiement.archived == False)
 
     # Apply filters
     if eleve_id:
@@ -381,11 +385,13 @@ async def delete_paiement(
 
 @router.get("/stats/overview")
 async def get_payment_stats(
+    mois: Optional[int] = Query(None),
+    annee: Optional[int] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Get payment statistics overview
+    Get payment statistics overview, optionally filtered by month/year
     """
     if not current_user.merkez_id:
         raise HTTPException(
@@ -393,38 +399,65 @@ async def get_payment_stats(
             detail="Vous devez être professeur ou institut"
         )
 
-    # Current month stats
-    current_month = date.today().month
-    current_year = date.today().year
+    # If no month/year specified, use current
+    if not mois:
+        mois = date.today().month
+    if not annee:
+        annee = date.today().year
 
-    total_du = db.query(Paiement).filter(
-        Paiement.merkez_id == current_user.merkez_id
-    ).with_entities(
+    # Base query - exclude archived by default
+    base_query = db.query(Paiement).filter(
+        Paiement.merkez_id == current_user.merkez_id,
+        Paiement.archived == False
+    )
+
+    # Filter by month/year if specified
+    if mois and annee:
+        base_query = base_query.filter(
+            Paiement.mois == mois,
+            Paiement.annee == annee
+        )
+
+    total_du = base_query.with_entities(
         func.sum(Paiement.montant_du)
     ).scalar() or 0
 
-    total_paye = db.query(Paiement).filter(
-        Paiement.merkez_id == current_user.merkez_id
-    ).with_entities(
+    total_paye = base_query.with_entities(
         func.sum(Paiement.montant_paye)
     ).scalar() or 0
 
     en_retard_count = db.query(Paiement).filter(
         Paiement.merkez_id == current_user.merkez_id,
+        Paiement.archived == False,
         Paiement.statut == "en_retard"
-    ).count()
+    )
+    if mois and annee:
+        en_retard_count = en_retard_count.filter(
+            Paiement.mois == mois,
+            Paiement.annee == annee
+        )
+    en_retard_count = en_retard_count.count()
 
     impaye_count = db.query(Paiement).filter(
         Paiement.merkez_id == current_user.merkez_id,
+        Paiement.archived == False,
         or_(Paiement.statut == "impaye", Paiement.statut == "en_retard")
-    ).count()
+    )
+    if mois and annee:
+        impaye_count = impaye_count.filter(
+            Paiement.mois == mois,
+            Paiement.annee == annee
+        )
+    impaye_count = impaye_count.count()
 
     return {
         "total_du": total_du,
         "total_paye": total_paye,
         "total_restant": total_du - total_paye,
         "en_retard_count": en_retard_count,
-        "impaye_count": impaye_count
+        "impaye_count": impaye_count,
+        "mois": mois,
+        "annee": annee
     }
 
 
@@ -746,3 +779,135 @@ async def send_payment_request_email(
         subject=subject,
         html_content=html_content
     )
+
+
+@router.post("/archive-month")
+async def archive_month(
+    mois: int = Query(...),
+    annee: int = Query(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Archive all payments for a specific month/year
+    """
+    if not current_user.merkez_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous devez être professeur ou institut"
+        )
+
+    # Get all payments for this month
+    paiements = db.query(Paiement).filter(
+        Paiement.merkez_id == current_user.merkez_id,
+        Paiement.mois == mois,
+        Paiement.annee == annee,
+        Paiement.archived == False
+    ).all()
+
+    if not paiements:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Aucun paiement trouvé pour ce mois"
+        )
+
+    # Archive all payments
+    for p in paiements:
+        p.archived = True
+        p.archived_at = datetime.now()
+
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"{len(paiements)} paiement(s) archivé(s)",
+        "count": len(paiements)
+    }
+
+
+@router.post("/unarchive-month")
+async def unarchive_month(
+    mois: int = Query(...),
+    annee: int = Query(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Unarchive all payments for a specific month/year
+    """
+    if not current_user.merkez_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous devez être professeur ou institut"
+        )
+
+    # Get all archived payments for this month
+    paiements = db.query(Paiement).filter(
+        Paiement.merkez_id == current_user.merkez_id,
+        Paiement.mois == mois,
+        Paiement.annee == annee,
+        Paiement.archived == True
+    ).all()
+
+    if not paiements:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Aucun paiement archivé trouvé pour ce mois"
+        )
+
+    # Unarchive all payments
+    for p in paiements:
+        p.archived = False
+        p.archived_at = None
+
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"{len(paiements)} paiement(s) désarchivé(s)",
+        "count": len(paiements)
+    }
+
+
+@router.get("/archived-months")
+async def get_archived_months(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get list of archived months
+    """
+    if not current_user.merkez_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous devez être professeur ou institut"
+        )
+
+    # Get distinct month/year combinations that have archived payments
+    archived = db.query(
+        Paiement.mois,
+        Paiement.annee,
+        func.count(Paiement.id).label('count'),
+        func.sum(Paiement.montant_du).label('total_du'),
+        func.sum(Paiement.montant_paye).label('total_paye')
+    ).filter(
+        Paiement.merkez_id == current_user.merkez_id,
+        Paiement.archived == True
+    ).group_by(
+        Paiement.mois,
+        Paiement.annee
+    ).order_by(
+        Paiement.annee.desc(),
+        Paiement.mois.desc()
+    ).all()
+
+    return [
+        {
+            "mois": m.mois,
+            "annee": m.annee,
+            "count": m.count,
+            "total_du": m.total_du or 0,
+            "total_paye": m.total_paye or 0
+        }
+        for m in archived
+    ]
