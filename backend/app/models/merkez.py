@@ -30,6 +30,14 @@ class Merkez(Base):
     presentation_video_url = Column(String(500))
     image_url = Column(String(500))
 
+    # Liens et réseaux sociaux
+    site_web = Column(String(500))
+    facebook = Column(String(500))
+    instagram = Column(String(500))
+    linkedin = Column(String(500))
+    twitter = Column(String(500))
+    youtube = Column(String(500))
+
     # Matières enseignées (JSON array: ["coran", "arabe", "tajwid"])
     matieres = Column(JSON, default=list)
 
