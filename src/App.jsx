@@ -11,6 +11,7 @@ import DashboardEleves from "./pages/DashboardEleves";
 import DashboardEleveForm from "./pages/DashboardEleveForm";
 import DashboardEleveDetail from "./pages/DashboardEleveDetail";
 import DashboardProfil from "./pages/DashboardProfil";
+import DashboardProfilComplet from "./pages/DashboardProfilComplet";
 import DashboardCalendrier from "./pages/DashboardCalendrier";
 import CalendrierApple from "./pages/CalendrierApple";
 import DashboardMessages from "./pages/DashboardMessages";
@@ -45,7 +46,7 @@ function App() {
         <Route path="/dashboard/eleves/nouveau" element={<DashboardEleveForm />} />
         <Route path="/dashboard/eleves/:id" element={<DashboardEleveDetail />} />
         <Route path="/dashboard/eleves/:id/modifier" element={<DashboardEleveForm />} />
-        <Route path="/dashboard/profil" element={<DashboardProfil />} />
+        <Route path="/dashboard/profil" element={<DashboardProfilComplet />} />
         <Route path="/dashboard/calendrier" element={<CalendrierApple />} />
         <Route path="/dashboard/calendrier-old" element={<DashboardCalendrier />} />
         <Route path="/dashboard/paiements" element={<Paiements />} />
