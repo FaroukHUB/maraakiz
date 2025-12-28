@@ -78,6 +78,33 @@
 .toolbar-right {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.btn-add-cours {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: #007aff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-add-cours:hover {
+  background: #0051d5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.btn-add-cours .btn-icon {
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .view-switcher {

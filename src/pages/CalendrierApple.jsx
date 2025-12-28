@@ -14,6 +14,7 @@ const CalendrierApple = () => {
   const [loading, setLoading] = useState(false);
   const [selectedCours, setSelectedCours] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -104,6 +105,10 @@ const CalendrierApple = () => {
         </div>
 
         <div className="toolbar-right">
+          <button className="btn-add-cours" onClick={() => setShowAddModal(true)}>
+            <span className="btn-icon">+</span>
+            Nouveau cours
+          </button>
           <div className="view-switcher">
             {['day', 'week', 'month', 'year'].map(v => (
               <button

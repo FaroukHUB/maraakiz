@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import moment from 'moment';
 import 'moment/dist/locale/fr';
+import DashboardLayout from '../layouts/DashboardLayout';
 import './Paiements.css';
 
 moment.locale('fr');
@@ -178,17 +179,20 @@ const Paiements = () => {
 
   if (loading) {
     return (
-      <div className="paiements-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Chargement des paiements...</p>
+      <DashboardLayout>
+        <div className="paiements-container">
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+            <p>Chargement des paiements...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="paiements-container">
+    <DashboardLayout>
+      <div className="paiements-container">
       {/* Header */}
       <div className="paiements-header">
         <div>
@@ -487,6 +491,7 @@ const Paiements = () => {
         </div>
       )}
     </div>
+    </DashboardLayout>
   );
 };
 
