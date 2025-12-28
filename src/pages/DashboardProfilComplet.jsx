@@ -79,9 +79,9 @@ const DashboardProfilComplet = () => {
   ];
 
   const typeClasseOptions = [
-    { value: 'seul', label: '👤 Cours individuel', emoji: '👤' },
-    { value: 'binome', label: '👥 Binôme', emoji: '👥' },
-    { value: 'groupes', label: '👨‍👩‍👧‍👦 Groupes', emoji: '👨‍👩‍👧‍👦' }
+    { value: 'seul', label: '🔹 Cours individuel', emoji: '🔹' },
+    { value: 'binome', label: '🔸 Binôme', emoji: '🔸' },
+    { value: 'groupes', label: '💠 Groupes', emoji: '💠' }
   ];
 
   const niveauxOptions = [
@@ -97,10 +97,10 @@ const DashboardProfilComplet = () => {
   ];
 
   const publicCibleOptions = [
-    { value: 'enfants', label: '👶 Enfants', emoji: '👶' },
-    { value: 'ados', label: '🧒 Adolescents', emoji: '🧒' },
-    { value: 'hommes', label: '🧔 Hommes', emoji: '🧔' },
-    { value: 'femmes', label: '👩 Femmes', emoji: '👩' }
+    { value: 'enfants', label: '🌱 Enfants', emoji: '🌱' },
+    { value: 'ados', label: '⭐ Adolescents', emoji: '⭐' },
+    { value: 'hommes', label: '🔵 Hommes', emoji: '🔵' },
+    { value: 'femmes', label: '🟣 Femmes', emoji: '🟣' }
   ];
 
   useEffect(() => {
@@ -395,7 +395,7 @@ const DashboardProfilComplet = () => {
           <div className="bg-white rounded-2xl p-8 shadow-md border-2 border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
               <User className="mr-3 text-[#437C8B]" size={28} />
-              👤 Informations Personnelles
+              ℹ️ Informations Personnelles
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
