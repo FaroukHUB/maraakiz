@@ -19,6 +19,22 @@ router = APIRouter()
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
 
+# Helper function to assign avatar based on genre
+def assign_avatar_by_genre(genre: Optional[str]) -> Optional[str]:
+    """Assign avatar URL based on student's genre"""
+    if not genre:
+        return None
+
+    genre_lower = genre.lower()
+    avatar_map = {
+        "homme": "/avatars/homme.webp",
+        "femme": "/avatars/femme.webp",
+        "garcon": "/avatars/garcon.webp",
+        "fille": "/avatars/fille.webp"
+    }
+
+    return avatar_map.get(genre_lower)
+
 # Pydantic schemas
 class EleveCreate(BaseModel):
     nom: str
@@ -72,6 +88,7 @@ class EleveResponse(BaseModel):
     telephone: Optional[str]
     date_naissance: Optional[date]
     genre: Optional[str]
+    avatar_url: Optional[str]
     nom_parent: Optional[str]
     telephone_parent: Optional[str]
     email_parent: Optional[str]
@@ -166,9 +183,15 @@ async def create_eleve(
         )
 
     # Create the eleve record
+    eleve_dict = eleve_data.model_dump()
+
+    # Auto-assign avatar based on genre
+    if eleve_data.genre:
+        eleve_dict['avatar_url'] = assign_avatar_by_genre(eleve_data.genre)
+
     new_eleve = Eleve(
         merkez_id=current_user.merkez_id,
-        **eleve_data.model_dump()
+        **eleve_dict
     )
 
     db.add(new_eleve)
@@ -266,6 +289,11 @@ async def update_eleve(
 
     # Update only provided fields
     update_data = eleve_data.model_dump(exclude_unset=True)
+
+    # If genre is being updated, auto-assign new avatar
+    if 'genre' in update_data and update_data['genre']:
+        update_data['avatar_url'] = assign_avatar_by_genre(update_data['genre'])
+
     for field, value in update_data.items():
         setattr(eleve, field, value)
 

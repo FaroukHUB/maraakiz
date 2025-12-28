@@ -16,6 +16,11 @@ class User(Base):
     # Lien vers merkez_id si c'est un prof
     merkez_id = Column(Integer, nullable=True)
 
+    # Avatar pour les professeurs
+    genre = Column(String(20), nullable=True)  # "homme", "femme"
+    avatar_url = Column(String(255), nullable=True)  # Chemin vers l'avatar (default ou custom)
+    avatar_type = Column(String(20), default="default")  # "default" ou "custom"
+
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
 

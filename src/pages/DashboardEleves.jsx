@@ -236,10 +236,18 @@ const DashboardEleves = () => {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-full bg-[#437C8B] flex items-center justify-center text-white font-semibold">
-                            {eleve.prenom.charAt(0)}
-                            {eleve.nom.charAt(0)}
-                          </div>
+                          {eleve.avatar_url ? (
+                            <img
+                              src={eleve.avatar_url}
+                              alt={`${eleve.prenom} ${eleve.nom}`}
+                              className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-[#437C8B] flex items-center justify-center text-white font-semibold">
+                              {eleve.prenom.charAt(0)}
+                              {eleve.nom.charAt(0)}
+                            </div>
+                          )}
                           <div>
                             <p className="font-semibold text-gray-900">
                               {eleve.prenom} {eleve.nom}
