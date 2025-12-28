@@ -97,10 +97,10 @@ const DashboardProfilComplet = () => {
   ];
 
   const publicCibleOptions = [
-    { value: 'enfants', label: '🌱 Enfants', emoji: '🌱' },
-    { value: 'ados', label: '⭐ Adolescents', emoji: '⭐' },
-    { value: 'hommes', label: '🔵 Hommes', emoji: '🔵' },
-    { value: 'femmes', label: '🟣 Femmes', emoji: '🟣' }
+    { value: 'homme', label: '🔵 Homme', emoji: '🔵' },
+    { value: 'femme', label: '🟣 Femme', emoji: '🟣' },
+    { value: 'garcon', label: '🔷 Garçon', emoji: '🔷' },
+    { value: 'fille', label: '💜 Fille', emoji: '💜' }
   ];
 
   useEffect(() => {
