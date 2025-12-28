@@ -1,201 +1,87 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import DashboardLayout from "../layouts/DashboardLayout";
-import axios from "axios";
-import {
-  Edit,
-  Trash2,
-  ArrowLeft,
-  Mail,
-  Phone,
-  Calendar,
-  BookOpen,
-  Clock,
-  Euro,
-  User,
-  FileText,
-  AlertCircle
-} from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import moment from 'moment';
+import 'moment/dist/locale/fr';
+import DashboardLayout from '../layouts/DashboardLayout';
+import { ArrowLeft, Calendar, CreditCard, FileText, User } from 'lucide-react';
+import './DashboardEleveDetail.css';
 
-const API_URL = "http://127.0.0.1:8000";
+moment.locale('fr');
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+// Même palette de couleurs que le calendrier
+const ELEVE_COLORS = [
+  { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', shadow: 'rgba(102, 126, 234, 0.3)' },
+  { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', shadow: 'rgba(240, 147, 251, 0.3)' },
+  { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', shadow: 'rgba(79, 172, 254, 0.3)' },
+  { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', shadow: 'rgba(67, 233, 123, 0.3)' },
+  { bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', shadow: 'rgba(250, 112, 154, 0.3)' },
+  { bg: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)', shadow: 'rgba(48, 207, 208, 0.3)' },
+  { bg: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', shadow: 'rgba(168, 237, 234, 0.3)' },
+  { bg: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', shadow: 'rgba(255, 154, 158, 0.3)' },
+  { bg: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', shadow: 'rgba(255, 236, 210, 0.3)' },
+  { bg: 'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)', shadow: 'rgba(255, 110, 127, 0.3)' },
+];
+
+const getEleveColor = (eleveId) => {
+  const index = eleveId % ELEVE_COLORS.length;
+  return ELEVE_COLORS[index];
+};
 
 const DashboardEleveDetail = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('cours');
   const [eleve, setEleve] = useState(null);
+  const [cours, setCours] = useState([]);
+  const [paiements, setPaiements] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [payments, setPayments] = useState([]);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [newPayment, setNewPayment] = useState({
-    mois: new Date().getMonth() + 1,
-    annee: new Date().getFullYear(),
-    montant_du: "",
-    montant_paye: "",
-    date_echeance: "",
-    methode_paiement: "",
-    notes: ""
-  });
 
   useEffect(() => {
-    fetchEleve();
-    fetchPayments();
+    fetchEleveDetails();
+    fetchCours();
+    fetchPaiements();
   }, [id]);
 
-  const fetchEleve = async () => {
+  const fetchEleveDetails = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/eleves/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
       setEleve(response.data);
       setLoading(false);
     } catch (error) {
-      console.error("Erreur lors du chargement de l'élève:", error);
-      if (error.response?.status === 404) {
-        navigate("/dashboard/eleves");
-      }
+      console.error('Erreur:', error);
       setLoading(false);
     }
   };
 
-  const fetchPayments = async () => {
+  const fetchCours = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/calendrier/cours`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { eleve_id: id }
+      });
+      setCours(response.data);
+    } catch (error) {
+      console.error('Erreur:', error);
+    }
+  };
+
+  const fetchPaiements = async () => {
+    try {
+      const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/paiements/student/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setPayments(response.data);
+      setPaiements(response.data);
     } catch (error) {
-      console.error("Erreur lors du chargement des paiements:", error);
+      console.error('Erreur:', error);
     }
-  };
-
-  const handleAddPayment = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem("token");
-      await axios.post(`${API_URL}/api/paiements`, {
-        eleve_id: parseInt(id),
-        ...newPayment,
-        montant_du: parseFloat(newPayment.montant_du),
-        montant_paye: parseFloat(newPayment.montant_paye || 0)
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      setShowPaymentModal(false);
-      setNewPayment({
-        mois: new Date().getMonth() + 1,
-        annee: new Date().getFullYear(),
-        montant_du: "",
-        montant_paye: "",
-        date_echeance: "",
-        methode_paiement: "",
-        notes: ""
-      });
-      fetchPayments();
-    } catch (error) {
-      console.error("Erreur lors de l'ajout du paiement:", error);
-      alert("Erreur lors de l'ajout du paiement");
-    }
-  };
-
-  const handleMarkAsPaid = async (paymentId) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.post(`${API_URL}/api/paiements/${paymentId}/mark-paid`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      fetchPayments();
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour du paiement:", error);
-      alert("Erreur lors de la mise à jour du paiement");
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_URL}/api/eleves/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      navigate("/dashboard/eleves");
-    } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
-      alert("Erreur lors de la suppression de l'élève");
-    }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "Non spécifié";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric"
-    });
-  };
-
-  const getStatutBadge = (statut) => {
-    const styles = {
-      actif: "bg-green-100 text-green-800",
-      inactif: "bg-gray-100 text-gray-800",
-      suspendu: "bg-red-100 text-red-800"
-    };
-
-    return (
-      <span
-        className={`px-4 py-2 rounded-full text-sm font-medium ${
-          styles[statut] || styles.actif
-        }`}
-      >
-        {statut.charAt(0).toUpperCase() + statut.slice(1)}
-      </span>
-    );
-  };
-
-  const getPaymentStatusBadge = (statut) => {
-    const styles = {
-      paye: "bg-green-100 text-green-800",
-      partiel: "bg-yellow-100 text-yellow-800",
-      impaye: "bg-gray-100 text-gray-800",
-      en_retard: "bg-red-100 text-red-800"
-    };
-
-    const labels = {
-      paye: "Payé",
-      partiel: "Partiel",
-      impaye: "Impayé",
-      en_retard: "En retard"
-    };
-
-    return (
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-medium ${
-          styles[statut] || styles.impaye
-        }`}
-      >
-        {labels[statut] || statut}
-      </span>
-    );
-  };
-
-  const getMoisLabel = (mois) => {
-    const moisLabels = [
-      "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
-    ];
-    return moisLabels[mois - 1] || mois;
   };
 
   if (loading) {
@@ -212,537 +98,262 @@ const DashboardEleveDetail = () => {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <AlertCircle size={48} className="mx-auto text-gray-300 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900">
-            Élève non trouvé
-          </h3>
+          <p className="text-gray-600">Élève non trouvé</p>
         </div>
       </DashboardLayout>
     );
   }
 
+  const eleveColor = getEleveColor(parseInt(id));
+
+  // Séparer les cours passés et à venir
+  const now = moment();
+  const coursAvenir = cours.filter(c => moment(c.date_debut).isAfter(now)).sort((a, b) => moment(a.date_debut).diff(moment(b.date_debut)));
+  const coursPasses = cours.filter(c => moment(c.date_debut).isSameOrBefore(now)).sort((a, b) => moment(b.date_debut).diff(moment(a.date_debut)));
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="eleve-details">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate("/dashboard/eleves")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        <div className="details-header">
+          <button onClick={() => navigate('/dashboard/eleves')} className="btn-back">
+            <ArrowLeft size={20} />
+            Retour
+          </button>
+
+          <div className="header-content">
+            <div
+              className="eleve-avatar-large"
+              style={{ background: eleveColor.bg }}
             >
-              <ArrowLeft size={24} />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {eleve.prenom} {eleve.nom}
-              </h1>
-              <div className="flex items-center space-x-3 mt-2">
-                {getStatutBadge(eleve.statut)}
-                <span className="text-gray-500 capitalize">{eleve.genre}</span>
+              {eleve.prenom[0]}{eleve.nom[0]}
+            </div>
+            <div className="header-info">
+              <h1>{eleve.prenom} {eleve.nom}</h1>
+              <div className="header-meta">
+                <span>{eleve.email}</span>
+                {eleve.telephone && <span>• {eleve.telephone}</span>}
+                <span className={`statut-badge ${eleve.statut}`}>
+                  {eleve.statut === 'actif' ? '✅ Actif' : '⏸️ Inactif'}
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="flex space-x-3">
-            <button
-              onClick={() => navigate(`/dashboard/eleves/${id}/modifier`)}
-              className="flex items-center space-x-2 bg-green-600 text-white px-5 py-3 rounded-xl hover:bg-green-700 transition-all shadow-md"
-            >
-              <Edit size={18} />
-              <span>Modifier</span>
-            </button>
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="flex items-center space-x-2 bg-red-600 text-white px-5 py-3 rounded-xl hover:bg-red-700 transition-all shadow-md"
-            >
-              <Trash2 size={18} />
-              <span>Supprimer</span>
-            </button>
+          <div className="header-stats">
+            <div className="stat-item">
+              <Calendar size={20} />
+              <div>
+                <div className="stat-value">{cours.length}</div>
+                <div className="stat-label">Cours</div>
+              </div>
+            </div>
+            <div className="stat-item">
+              <CreditCard size={20} />
+              <div>
+                <div className="stat-value">{paiements.length}</div>
+                <div className="stat-label">Paiements</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column - Main info */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Contact */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Contact</h2>
-              <div className="space-y-3">
-                {eleve.email && (
-                  <div className="flex items-center space-x-3 text-gray-700">
-                    <Mail className="text-[#437C8B]" size={20} />
-                    <a
-                      href={`mailto:${eleve.email}`}
-                      className="hover:text-[#437C8B]"
-                    >
-                      {eleve.email}
-                    </a>
-                  </div>
-                )}
-                {eleve.telephone && (
-                  <div className="flex items-center space-x-3 text-gray-700">
-                    <Phone className="text-[#437C8B]" size={20} />
-                    <a
-                      href={`tel:${eleve.telephone}`}
-                      className="hover:text-[#437C8B]"
-                    >
-                      {eleve.telephone}
-                    </a>
-                  </div>
-                )}
-                {eleve.date_naissance && (
-                  <div className="flex items-center space-x-3 text-gray-700">
-                    <Calendar className="text-[#437C8B]" size={20} />
-                    <span>Né(e) le {formatDate(eleve.date_naissance)}</span>
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* Tabs */}
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === 'cours' ? 'active' : ''}`}
+            onClick={() => setActiveTab('cours')}
+          >
+            <Calendar size={18} />
+            Cours
+          </button>
+          <button
+            className={`tab ${activeTab === 'paiements' ? 'active' : ''}`}
+            onClick={() => setActiveTab('paiements')}
+          >
+            <CreditCard size={18} />
+            Paiements
+          </button>
+          <button
+            className={`tab ${activeTab === 'infos' ? 'active' : ''}`}
+            onClick={() => setActiveTab('infos')}
+          >
+            <User size={18} />
+            Informations
+          </button>
+        </div>
 
-            {/* Contact parent */}
-            {(eleve.nom_parent || eleve.telephone_parent || eleve.email_parent) && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Contact parent/tuteur
-                </h2>
-                <div className="space-y-3">
-                  {eleve.nom_parent && (
-                    <div className="flex items-center space-x-3 text-gray-700">
-                      <User className="text-[#437C8B]" size={20} />
-                      <span>{eleve.nom_parent}</span>
-                    </div>
-                  )}
-                  {eleve.email_parent && (
-                    <div className="flex items-center space-x-3 text-gray-700">
-                      <Mail className="text-[#437C8B]" size={20} />
-                      <a
-                        href={`mailto:${eleve.email_parent}`}
-                        className="hover:text-[#437C8B]"
-                      >
-                        {eleve.email_parent}
-                      </a>
-                    </div>
-                  )}
-                  {eleve.telephone_parent && (
-                    <div className="flex items-center space-x-3 text-gray-700">
-                      <Phone className="text-[#437C8B]" size={20} />
-                      <a
-                        href={`tel:${eleve.telephone_parent}`}
-                        className="hover:text-[#437C8B]"
-                      >
-                        {eleve.telephone_parent}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Informations académiques */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Informations académiques
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Niveau</p>
-                  <p className="font-medium text-gray-900 capitalize">
-                    {eleve.niveau || "Non défini"}
-                  </p>
-                </div>
-                {eleve.matieres && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Matières</p>
-                    <p className="font-medium text-gray-900">{eleve.matieres}</p>
-                  </div>
-                )}
-                {eleve.objectifs && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Objectifs</p>
-                    <p className="text-gray-900">{eleve.objectifs}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Notes et commentaires */}
-            {(eleve.notes || eleve.commentaire_general) && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center space-x-2">
-                  <FileText size={24} />
-                  <span>Notes et commentaires</span>
-                </h2>
-                <div className="space-y-4">
-                  {eleve.notes && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">
-                        Notes personnelles
-                      </p>
-                      <p className="text-gray-900 whitespace-pre-wrap">
-                        {eleve.notes}
-                      </p>
-                    </div>
-                  )}
-                  {eleve.commentaire_general && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">
-                        Commentaire général
-                      </p>
-                      <p className="text-gray-900 whitespace-pre-wrap">
-                        {eleve.commentaire_general}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Paiements */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
-                  <Euro size={24} />
-                  <span>Paiements</span>
-                </h2>
-                <button
-                  onClick={() => setShowPaymentModal(true)}
-                  className="px-4 py-2 bg-[#437C8B] text-white rounded-lg hover:bg-[#35626f] transition-colors text-sm font-medium"
-                >
-                  + Ajouter un paiement
-                </button>
-              </div>
-
-              {payments.length === 0 ? (
-                <div className="text-center py-8 text-gray-400">
-                  <Euro size={48} className="mx-auto mb-3 opacity-50" />
-                  <p className="font-medium">Aucun paiement enregistré</p>
-                  <p className="text-sm">Ajoutez le premier paiement pour cet élève</p>
+        {/* Tab Content */}
+        <div className="tab-content">
+          {activeTab === 'cours' && (
+            <div className="cours-section">
+              {cours.length === 0 ? (
+                <div className="empty-state">
+                  <Calendar size={48} />
+                  <h3>Aucun cours</h3>
+                  <p>Cet élève n'a pas encore de cours planifiés</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {payments.map((payment) => (
-                    <div
-                      key={payment.id}
-                      className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-3">
-                          <h3 className="font-semibold text-gray-900">
-                            {getMoisLabel(payment.mois)} {payment.annee}
-                          </h3>
-                          {getPaymentStatusBadge(payment.statut)}
+                <>
+                  {/* Cours à venir */}
+                  {coursAvenir.length > 0 && (
+                    <div className="cours-group">
+                      <h3 className="group-title">📅 Cours à venir ({coursAvenir.length})</h3>
+                      <div className="cours-list">
+                        {coursAvenir.map(c => (
+                          <div
+                            key={c.id}
+                            className="cours-card"
+                            style={{ borderLeft: `4px solid`, borderImage: eleveColor.bg + ' 1' }}
+                          >
+                            <div className="cours-date">
+                              <div className="date-day">{moment(c.date_debut).format('DD')}</div>
+                              <div className="date-month">{moment(c.date_debut).format('MMM')}</div>
+                            </div>
+                            <div className="cours-info">
+                              <div className="cours-title">{c.titre}</div>
+                              <div className="cours-meta">
+                                <span>{moment(c.date_debut).format('dddd D MMMM YYYY')}</span>
+                                <span>•</span>
+                                <span>{moment(c.date_debut).format('HH:mm')} - {moment(c.date_fin).format('HH:mm')}</span>
+                                {c.is_recurrent && <span className="recur-badge">🔁 Récurrent</span>}
+                              </div>
+                              {c.lien_visio && (
+                                <a href={c.lien_visio} target="_blank" rel="noopener noreferrer" className="visio-btn">
+                                  📹 Rejoindre le cours
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cours passés */}
+                  {coursPasses.length > 0 && (
+                    <div className="cours-group">
+                      <h3 className="group-title">📚 Historique des cours ({coursPasses.length})</h3>
+                      <div className="cours-list">
+                        {coursPasses.map(c => (
+                          <div
+                            key={c.id}
+                            className="cours-card past"
+                            style={{ borderLeft: `4px solid`, borderImage: eleveColor.bg + ' 1', opacity: 0.7 }}
+                          >
+                            <div className="cours-date">
+                              <div className="date-day">{moment(c.date_debut).format('DD')}</div>
+                              <div className="date-month">{moment(c.date_debut).format('MMM')}</div>
+                            </div>
+                            <div className="cours-info">
+                              <div className="cours-title">{c.titre}</div>
+                              <div className="cours-meta">
+                                <span>{moment(c.date_debut).format('dddd D MMMM YYYY')}</span>
+                                <span>•</span>
+                                <span>{moment(c.date_debut).format('HH:mm')} - {moment(c.date_fin).format('HH:mm')}</span>
+                                {c.statut === 'termine' && <span className="status-badge success">✅ Terminé</span>}
+                                {c.statut === 'annule' && <span className="status-badge danger">❌ Annulé</span>}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'paiements' && (
+            <div className="paiements-section">
+              {paiements.length === 0 ? (
+                <div className="empty-state">
+                  <CreditCard size={48} />
+                  <h3>Aucun paiement</h3>
+                  <p>Aucun paiement enregistré pour cet élève</p>
+                </div>
+              ) : (
+                <div className="paiements-list">
+                  {paiements.map(p => (
+                    <div key={p.id} className="paiement-card">
+                      <div className="paiement-header">
+                        <span className="paiement-month">
+                          {moment().month(p.mois - 1).format('MMMM')} {p.annee}
+                        </span>
+                        <span className={`paiement-statut ${p.statut}`}>
+                          {p.statut === 'paye' && '✅ Payé'}
+                          {p.statut === 'impaye' && '⏳ Impayé'}
+                          {p.statut === 'partiel' && '⚠️ Partiel'}
+                          {p.statut === 'en_retard' && '🔴 En retard'}
+                        </span>
+                      </div>
+                      <div className="paiement-amounts">
+                        <div className="amount-item">
+                          <span className="amount-label">Montant dû</span>
+                          <span className="amount-value">{p.montant_du?.toFixed(2)} €</span>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-lg text-gray-900">
-                            {payment.montant_paye}€ / {payment.montant_du}€
-                          </p>
+                        <div className="amount-item">
+                          <span className="amount-label">Payé</span>
+                          <span className="amount-value success">{p.montant_paye?.toFixed(2)} €</span>
+                        </div>
+                        <div className="amount-item">
+                          <span className="amount-label">Restant</span>
+                          <span className="amount-value warning">{(p.montant_du - p.montant_paye)?.toFixed(2)} €</span>
                         </div>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-3 text-sm text-gray-600 mb-3">
-                        <div>
-                          <span className="text-gray-500">Échéance:</span>{" "}
-                          <span className="font-medium">
-                            {formatDate(payment.date_echeance)}
-                          </span>
+                      {p.date_echeance && (
+                        <div className="paiement-footer">
+                          Échéance: {moment(p.date_echeance).format('DD/MM/YYYY')}
                         </div>
-                        {payment.date_paiement && (
-                          <div>
-                            <span className="text-gray-500">Payé le:</span>{" "}
-                            <span className="font-medium">
-                              {formatDate(payment.date_paiement)}
-                            </span>
-                          </div>
-                        )}
-                        {payment.methode_paiement && (
-                          <div>
-                            <span className="text-gray-500">Méthode:</span>{" "}
-                            <span className="font-medium capitalize">
-                              {payment.methode_paiement}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {payment.notes && (
-                        <p className="text-sm text-gray-600 mb-3 italic border-l-2 border-gray-300 pl-3">
-                          {payment.notes}
-                        </p>
-                      )}
-
-                      {payment.statut !== "paye" && (
-                        <button
-                          onClick={() => handleMarkAsPaid(payment.id)}
-                          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-                        >
-                          ✓ Marquer comme payé
-                        </button>
                       )}
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          </div>
+          )}
 
-          {/* Right column - Stats & Course info */}
-          <div className="space-y-6">
-            {/* Stats */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Statistiques
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
-                  <div className="flex items-center space-x-3">
-                    <BookOpen className="text-blue-600" size={20} />
-                    <span className="text-gray-700">Cours suivis</span>
+          {activeTab === 'infos' && (
+            <div className="infos-section">
+              <div className="info-grid">
+                <div className="info-card">
+                  <h3>📧 Contact</h3>
+                  <div className="info-item">
+                    <span className="info-label">Email</span>
+                    <span className="info-value">{eleve.email}</span>
                   </div>
-                  <span className="font-bold text-blue-600">
-                    {eleve.nombre_cours_suivis}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-red-50 rounded-xl">
-                  <div className="flex items-center space-x-3">
-                    <AlertCircle className="text-red-600" size={20} />
-                    <span className="text-gray-700">Absences</span>
-                  </div>
-                  <span className="font-bold text-red-600">
-                    {eleve.nombre_absences}
-                  </span>
-                </div>
-
-                {eleve.date_dernier_cours && (
-                  <div className="p-3 bg-gray-50 rounded-xl">
-                    <p className="text-sm text-gray-600 mb-1">Dernier cours</p>
-                    <p className="font-medium text-gray-900">
-                      {formatDate(eleve.date_dernier_cours)}
-                    </p>
-                  </div>
-                )}
-
-                <div className="p-3 bg-gray-50 rounded-xl">
-                  <p className="text-sm text-gray-600 mb-1">Inscription</p>
-                  <p className="font-medium text-gray-900">
-                    {formatDate(eleve.date_inscription)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Course info */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Informations de cours
-              </h2>
-              <div className="space-y-3">
-                {eleve.type_cours && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Type de cours</p>
-                    <p className="font-medium text-gray-900 capitalize">
-                      {eleve.type_cours.replace("-", " ")}
-                    </p>
-                  </div>
-                )}
-                {eleve.frequence_cours && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Fréquence</p>
-                    <p className="font-medium text-gray-900">
-                      {eleve.frequence_cours}
-                    </p>
-                  </div>
-                )}
-                {eleve.duree_cours && (
-                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-xl">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="text-purple-600" size={20} />
-                      <span className="text-gray-700">Durée</span>
+                  {eleve.telephone && (
+                    <div className="info-item">
+                      <span className="info-label">Téléphone</span>
+                      <span className="info-value">{eleve.telephone}</span>
                     </div>
-                    <span className="font-bold text-purple-600">
-                      {eleve.duree_cours} min
-                    </span>
+                  )}
+                </div>
+
+                <div className="info-card">
+                  <h3>👤 Informations personnelles</h3>
+                  <div className="info-item">
+                    <span className="info-label">Niveau</span>
+                    <span className="info-value">{eleve.niveau || 'Non renseigné'}</span>
                   </div>
-                )}
-                {eleve.tarif_heure && (
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
-                    <div className="flex items-center space-x-2">
-                      <Euro className="text-green-600" size={20} />
-                      <span className="text-gray-700">Tarif/h</span>
-                    </div>
-                    <span className="font-bold text-green-600">
-                      {eleve.tarif_heure}€
-                    </span>
+                  <div className="info-item">
+                    <span className="info-label">Date d'inscription</span>
+                    <span className="info-value">{moment(eleve.date_inscription).format('DD/MM/YYYY')}</span>
+                  </div>
+                </div>
+
+                {eleve.notes && (
+                  <div className="info-card full-width">
+                    <h3>📝 Notes</h3>
+                    <p className="notes-text">{eleve.notes}</p>
                   </div>
                 )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
-
-      {/* Delete Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
-              Supprimer l'élève
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Êtes-vous sûr de vouloir supprimer{" "}
-              <span className="font-semibold">
-                {eleve.prenom} {eleve.nom}
-              </span>{" "}
-              ? Cette action est irréversible.
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Payment Modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">
-              Ajouter un paiement
-            </h3>
-            <form onSubmit={handleAddPayment} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mois
-                  </label>
-                  <select
-                    value={newPayment.mois}
-                    onChange={(e) => setNewPayment({ ...newPayment, mois: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                    required
-                  >
-                    {[1,2,3,4,5,6,7,8,9,10,11,12].map((m) => (
-                      <option key={m} value={m}>{getMoisLabel(m)}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Année
-                  </label>
-                  <input
-                    type="number"
-                    value={newPayment.annee}
-                    onChange={(e) => setNewPayment({ ...newPayment, annee: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Montant dû (€)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={newPayment.montant_du}
-                    onChange={(e) => setNewPayment({ ...newPayment, montant_du: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Montant payé (€)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={newPayment.montant_paye}
-                    onChange={(e) => setNewPayment({ ...newPayment, montant_paye: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date d'échéance
-                </label>
-                <input
-                  type="date"
-                  value={newPayment.date_echeance}
-                  onChange={(e) => setNewPayment({ ...newPayment, date_echeance: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Méthode de paiement
-                </label>
-                <select
-                  value={newPayment.methode_paiement}
-                  onChange={(e) => setNewPayment({ ...newPayment, methode_paiement: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                >
-                  <option value="">Sélectionner...</option>
-                  <option value="especes">Espèces</option>
-                  <option value="virement">Virement</option>
-                  <option value="cheque">Chèque</option>
-                  <option value="carte">Carte bancaire</option>
-                  <option value="autre">Autre</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes (optionnel)
-                </label>
-                <textarea
-                  value={newPayment.notes}
-                  onChange={(e) => setNewPayment({ ...newPayment, notes: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                  placeholder="Notes supplémentaires..."
-                />
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowPaymentModal(false)}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 bg-[#437C8B] text-white rounded-xl hover:bg-[#35626f] transition-colors font-medium"
-                >
-                  Ajouter
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </DashboardLayout>
   );
 };
