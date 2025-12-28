@@ -183,6 +183,51 @@ L'équipe Maraakiz
         return False
 
 
+async def send_email(
+    to_email: str,
+    subject: str,
+    html_content: str,
+    text_content: Optional[str] = None
+) -> bool:
+    """
+    Generic function to send email with HTML content
+
+    Returns True if email sent successfully, False otherwise
+    """
+    if not GMAIL_USER or not GMAIL_PASSWORD:
+        print("⚠️  Gmail credentials not configured. Skipping email send.")
+        return False
+
+    try:
+        # Create message
+        message = MIMEMultipart("alternative")
+        message["Subject"] = subject
+        message["From"] = f"{SENDER_NAME} <{SENDER_EMAIL}>"
+        message["To"] = to_email
+
+        # Attach text version if provided
+        if text_content:
+            part1 = MIMEText(text_content, "plain", "utf-8")
+            message.attach(part1)
+
+        # Attach HTML version
+        part2 = MIMEText(html_content, "html", "utf-8")
+        message.attach(part2)
+
+        # Send email
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(GMAIL_USER, GMAIL_PASSWORD)
+            server.send_message(message)
+
+        print(f"✅ Email sent successfully to {to_email}")
+        return True
+
+    except Exception as e:
+        print(f"❌ Error sending email: {e}")
+        return False
+
+
 def test_email_config() -> bool:
     """
     Test if email configuration is valid
