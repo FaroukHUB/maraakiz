@@ -125,12 +125,28 @@ const DashboardEleveDetail = () => {
           </button>
 
           <div className="header-content">
-            <div
-              className="eleve-avatar-large"
-              style={{ background: eleveColor.bg }}
-            >
-              {eleve.prenom[0]}{eleve.nom[0]}
-            </div>
+            {eleve.avatar_url ? (
+              <img
+                src={eleve.avatar_url}
+                alt={`${eleve.prenom} ${eleve.nom}`}
+                className="eleve-avatar-large"
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '4px solid white',
+                  boxShadow: eleveColor.shadow + ' 0px 8px 24px'
+                }}
+              />
+            ) : (
+              <div
+                className="eleve-avatar-large"
+                style={{ background: eleveColor.bg }}
+              >
+                {eleve.prenom[0]}{eleve.nom[0]}
+              </div>
+            )}
             <div className="header-info">
               <h1>{eleve.prenom} {eleve.nom}</h1>
               <div className="header-meta">

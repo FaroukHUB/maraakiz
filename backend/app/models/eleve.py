@@ -17,6 +17,7 @@ class Eleve(Base):
     telephone = Column(String(50), nullable=True)
     date_naissance = Column(Date, nullable=True)
     genre = Column(String(20), nullable=True)  # "homme", "femme", "garcon", "fille"
+    avatar_url = Column(String(255), nullable=True)  # Chemin vers l'avatar
 
     # Contact parent/tuteur (si mineur)
     nom_parent = Column(String(255), nullable=True)

@@ -6,7 +6,7 @@ import { User, Upload, Trash2, AlertCircle, Camera, Save } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-const DashboardProfil = () => {
+const DashboardProfile = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -354,4 +354,4 @@ const DashboardProfil = () => {
   );
 };
 
-export default DashboardProfil;
+export default DashboardProfile;

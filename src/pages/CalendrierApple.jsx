@@ -564,7 +564,21 @@ const CoursModal = ({ cours, onClose, onUpdate }) => {
                   const color = getEleveColor(e.id);
                   return (
                     <div key={e.id} className="eleve-chip">
-                      <div className="avatar" style={{ background: color.bg }}>{e.prenom[0]}{e.nom[0]}</div>
+                      {e.avatar_url ? (
+                        <img
+                          src={e.avatar_url}
+                          alt={`${e.prenom} ${e.nom}`}
+                          className="avatar"
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      ) : (
+                        <div className="avatar" style={{ background: color.bg }}>{e.prenom[0]}{e.nom[0]}</div>
+                      )}
                       <span>{e.prenom} {e.nom}</span>
                     </div>
                   );
