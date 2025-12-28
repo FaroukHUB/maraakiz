@@ -14,11 +14,29 @@ const CalendrierApple = () => {
   const [loading, setLoading] = useState(false);
   const [selectedCours, setSelectedCours] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [eleves, setEleves] = useState([]);
+  const [isRecurrent, setIsRecurrent] = useState(false);
+
+  const [formData, setFormData] = useState({
+    eleve_ids: [],
+    matiere: 'coran',
+    description: '',
+    date: moment().format('YYYY-MM-DD'),
+    heure_debut: '09:00',
+    heure_fin: '10:00',
+    lien_visio: '',
+    sync_to_google: true,
+    statut: 'planifie',
+    recurrence_schedule: {},
+    recurrence_end_date: ''
+  });
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     fetchCours();
+    fetchEleves();
   }, [currentDate, view]);
 
   const fetchCours = async () => {
@@ -71,6 +89,92 @@ const CalendrierApple = () => {
     else if (view === 'year') setCurrentDate(currentDate.clone().subtract(1, 'year'));
   };
 
+  const fetchEleves = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE_URL}/api/eleves`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEleves(res.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des élèves:', error);
+    }
+  };
+
+  const handleOpenAddModal = () => {
+    setFormData({
+      eleve_ids: [],
+      matiere: 'coran',
+      description: '',
+      date: moment().format('YYYY-MM-DD'),
+      heure_debut: '09:00',
+      heure_fin: '10:00',
+      lien_visio: '',
+      sync_to_google: true,
+      statut: 'planifie',
+      recurrence_schedule: {},
+      recurrence_end_date: ''
+    });
+    setIsRecurrent(false);
+    setShowAddModal(true);
+  };
+
+  const handleSubmitCours = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+
+      const elevesSelectionnes = eleves.filter(e => formData.eleve_ids.includes(e.id));
+      const titre = elevesSelectionnes.length > 0
+        ? `Cours ${formData.matiere} - ${elevesSelectionnes.map(e => e.prenom).join(', ')}`
+        : `Cours ${formData.matiere}`;
+
+      if (isRecurrent) {
+        const dataToSend = {
+          eleve_ids: formData.eleve_ids,
+          titre,
+          matiere: formData.matiere,
+          description: formData.description,
+          recurrence_schedule: formData.recurrence_schedule,
+          recurrence_start_date: formData.date,
+          recurrence_end_date: formData.recurrence_end_date,
+          type_cours: 'en-ligne',
+          lien_visio: formData.lien_visio,
+          sync_to_google: formData.sync_to_google,
+          statut: formData.statut
+        };
+
+        await axios.post(`${API_BASE_URL}/api/calendrier/cours/recurrent`, dataToSend, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        const dataToSend = {
+          eleve_ids: formData.eleve_ids,
+          titre,
+          matiere: formData.matiere,
+          description: formData.description,
+          date: formData.date,
+          heure_debut: formData.heure_debut,
+          heure_fin: formData.heure_fin,
+          type_cours: 'en-ligne',
+          lien_visio: formData.lien_visio,
+          sync_to_google: formData.sync_to_google,
+          statut: formData.statut
+        };
+
+        await axios.post(`${API_BASE_URL}/api/calendrier/cours`, dataToSend, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+
+      setShowAddModal(false);
+      fetchCours();
+    } catch (error) {
+      console.error('Erreur lors de la création du cours:', error);
+      alert('Erreur lors de la création du cours');
+    }
+  };
+
   const handleCoursClick = (coursItem) => {
     setSelectedCours(coursItem);
     setShowModal(true);
@@ -104,7 +208,7 @@ const CalendrierApple = () => {
         </div>
 
         <div className="toolbar-right">
-          <button className="btn-add-cours" onClick={() => alert('Création de cours à venir')}>
+          <button className="btn-add-cours" onClick={handleOpenAddModal}>
             <span className="btn-icon">+</span>
             Nouveau cours
           </button>
@@ -136,9 +240,22 @@ const CalendrierApple = () => {
         )}
       </div>
 
-      {/* Modal */}
+      {/* Modal détails cours */}
       {showModal && selectedCours && (
         <CoursModal cours={selectedCours} onClose={() => { setShowModal(false); setSelectedCours(null); }} onUpdate={fetchCours} />
+      )}
+
+      {/* Modal création cours */}
+      {showAddModal && (
+        <AddCoursModal
+          formData={formData}
+          setFormData={setFormData}
+          eleves={eleves}
+          isRecurrent={isRecurrent}
+          setIsRecurrent={setIsRecurrent}
+          onSubmit={handleSubmitCours}
+          onClose={() => setShowAddModal(false)}
+        />
       )}
       </div>
     </DashboardLayout>
@@ -445,6 +562,312 @@ const CoursModal = ({ cours, onClose, onUpdate }) => {
           <button className="btn-del" onClick={handleDelete}>Supprimer</button>
           <button className="btn-can" onClick={onClose}>Fermer</button>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Modal de création de cours
+const AddCoursModal = ({ formData, setFormData, eleves, isRecurrent, setIsRecurrent, onSubmit, onClose }) => {
+  return (
+    <div className="modal-bg" onClick={onClose}>
+      <div className="modal-content add-cours-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head">
+          <h2>Nouveau cours</h2>
+          <button className="btn-x" onClick={onClose}>×</button>
+        </div>
+
+        <form onSubmit={onSubmit} className="modal-body">
+          {/* Sélection élève(s) */}
+          <div className="form-section">
+            <label className="form-label">👥 Élève(s) *</label>
+            {eleves.length === 0 ? (
+              <div style={{ padding: '1rem', background: '#fff3cd', borderRadius: '8px', color: '#856404' }}>
+                ⚠️ Aucun élève disponible. Veuillez d'abord ajouter des élèves.
+              </div>
+            ) : (
+              <>
+                <select
+                  className="form-input"
+                  value=""
+                  onChange={(e) => {
+                    const eleveId = parseInt(e.target.value);
+                    if (eleveId && !formData.eleve_ids.includes(eleveId)) {
+                      setFormData({
+                        ...formData,
+                        eleve_ids: [...formData.eleve_ids, eleveId]
+                      });
+                    }
+                  }}
+                >
+                  <option value="">+ Ajouter un élève</option>
+                  {eleves.filter(e => !formData.eleve_ids.includes(e.id)).map(eleve => (
+                    <option key={eleve.id} value={eleve.id}>
+                      {eleve.prenom} {eleve.nom}
+                    </option>
+                  ))}
+                </select>
+
+                {formData.eleve_ids.length > 0 && (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                    {formData.eleve_ids.map(eleveId => {
+                      const eleve = eleves.find(e => e.id === eleveId);
+                      return eleve ? (
+                        <div key={eleveId} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '6px 12px',
+                          background: '#e8f2f4',
+                          borderRadius: '8px',
+                          fontSize: '14px'
+                        }}>
+                          <span>{eleve.prenom} {eleve.nom}</span>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({
+                              ...formData,
+                              eleve_ids: formData.eleve_ids.filter(id => id !== eleveId)
+                            })}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '18px',
+                              color: '#437C8B'
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Toggle Cours Récurrent */}
+          <div className="form-section">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={isRecurrent}
+                onChange={(e) => setIsRecurrent(e.target.checked)}
+                style={{ width: '18px', height: '18px' }}
+              />
+              <span style={{ fontWeight: 600 }}>🔁 Cours récurrent (se répète sur plusieurs jours)</span>
+            </label>
+          </div>
+
+          {/* Date */}
+          <div className="form-section">
+            <label className="form-label">📅 {isRecurrent ? 'Date de début' : 'Date'} *</label>
+            <input
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              className="form-input"
+              required
+            />
+          </div>
+
+          {/* Sélection des jours avec horaires (seulement pour récurrent) */}
+          {isRecurrent && (
+            <>
+              <div className="form-section">
+                <label className="form-label">📆 Jours et horaires *</label>
+                <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>
+                  Cliquez sur un jour pour définir ses horaires
+                </p>
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {[
+                    { id: 0, name: 'Lundi' },
+                    { id: 1, name: 'Mardi' },
+                    { id: 2, name: 'Mercredi' },
+                    { id: 3, name: 'Jeudi' },
+                    { id: 4, name: 'Vendredi' },
+                    { id: 5, name: 'Samedi' },
+                    { id: 6, name: 'Dimanche' }
+                  ].map(day => {
+                    const dayKey = day.id.toString();
+                    const isSelected = dayKey in formData.recurrence_schedule;
+
+                    return (
+                      <div key={day.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSchedule = { ...formData.recurrence_schedule };
+                            if (isSelected) {
+                              delete newSchedule[dayKey];
+                            } else {
+                              newSchedule[dayKey] = { debut: '09:00', fin: '10:00' };
+                            }
+                            setFormData({ ...formData, recurrence_schedule: newSchedule });
+                          }}
+                          style={{
+                            padding: '10px',
+                            background: isSelected ? '#437C8B' : 'white',
+                            color: isSelected ? 'white' : '#333',
+                            border: '1px solid #d1d1d6',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontWeight: 500,
+                            transition: 'all 0.15s'
+                          }}
+                        >
+                          {day.name}
+                        </button>
+
+                        {isSelected && (
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingLeft: '12px' }}>
+                            <input
+                              type="time"
+                              value={formData.recurrence_schedule[dayKey].debut}
+                              onChange={(e) => {
+                                const newSchedule = { ...formData.recurrence_schedule };
+                                newSchedule[dayKey].debut = e.target.value;
+                                setFormData({ ...formData, recurrence_schedule: newSchedule });
+                              }}
+                              className="form-input"
+                              style={{ flex: 1 }}
+                            />
+                            <span style={{ color: '#6b7280', fontWeight: 600 }}>→</span>
+                            <input
+                              type="time"
+                              value={formData.recurrence_schedule[dayKey].fin}
+                              onChange={(e) => {
+                                const newSchedule = { ...formData.recurrence_schedule };
+                                newSchedule[dayKey].fin = e.target.value;
+                                setFormData({ ...formData, recurrence_schedule: newSchedule });
+                              }}
+                              className="form-input"
+                              style={{ flex: 1 }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Date de fin */}
+              <div className="form-section">
+                <label className="form-label">📅 Date de fin de la récurrence *</label>
+                <input
+                  type="date"
+                  value={formData.recurrence_end_date}
+                  onChange={(e) => setFormData({ ...formData, recurrence_end_date: e.target.value })}
+                  required={isRecurrent}
+                  className="form-input"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Horaires (pour cours non récurrent) */}
+          {!isRecurrent && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-section">
+                <label className="form-label">⏰ Heure de début *</label>
+                <input
+                  type="time"
+                  value={formData.heure_debut}
+                  onChange={(e) => setFormData({ ...formData, heure_debut: e.target.value })}
+                  required
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-section">
+                <label className="form-label">⏱️ Heure de fin *</label>
+                <input
+                  type="time"
+                  value={formData.heure_fin}
+                  onChange={(e) => setFormData({ ...formData, heure_fin: e.target.value })}
+                  required
+                  className="form-input"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Matière */}
+          <div className="form-section">
+            <label className="form-label">📚 Matière</label>
+            <select
+              value={formData.matiere}
+              onChange={(e) => setFormData({ ...formData, matiere: e.target.value })}
+              className="form-input"
+            >
+              <option value="coran">Coran</option>
+              <option value="arabe">Arabe</option>
+              <option value="tajwid">Tajwid</option>
+              <option value="fiqh">Fiqh</option>
+              <option value="aqida">Aqida</option>
+            </select>
+          </div>
+
+          {/* Lien visio */}
+          <div className="form-section">
+            <label className="form-label">🔗 Lien visio</label>
+            <input
+              type="url"
+              value={formData.lien_visio}
+              onChange={(e) => setFormData({ ...formData, lien_visio: e.target.value })}
+              placeholder="https://meet.google.com/..."
+              className="form-input"
+            />
+          </div>
+
+          {/* Statut */}
+          <div className="form-section">
+            <label className="form-label">📊 Statut</label>
+            <select
+              value={formData.statut}
+              onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
+              className="form-input"
+            >
+              <option value="planifie">📅 À venir</option>
+              <option value="termine">✅ Terminé</option>
+              <option value="reporte">⏸️ Reporté</option>
+            </select>
+          </div>
+
+          {/* Description */}
+          <div className="form-section">
+            <label className="form-label">📝 Notes (optionnel)</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows="3"
+              placeholder="Points à aborder, devoirs..."
+              className="form-input"
+              style={{ resize: 'vertical' }}
+            />
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '16px', borderTop: '1px solid #e5e5e5' }}>
+            <button type="button" onClick={onClose} className="btn-can">
+              Annuler
+            </button>
+            <button type="submit" style={{
+              padding: '10px 20px',
+              background: 'linear-gradient(135deg, #5a98ab 0%, #437C8B 100%)',
+              border: 'none',
+              borderRadius: '8px',
+              color: 'white',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}>
+              Créer
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
