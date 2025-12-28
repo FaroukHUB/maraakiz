@@ -7,6 +7,26 @@ import './CalendrierApple.css';
 
 moment.locale('fr');
 
+// Palette de couleurs pour les élèves
+const ELEVE_COLORS = [
+  { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', shadow: 'rgba(102, 126, 234, 0.3)' }, // Violet
+  { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', shadow: 'rgba(240, 147, 251, 0.3)' }, // Rose
+  { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', shadow: 'rgba(79, 172, 254, 0.3)' }, // Bleu clair
+  { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', shadow: 'rgba(67, 233, 123, 0.3)' }, // Vert
+  { bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', shadow: 'rgba(250, 112, 154, 0.3)' }, // Orange
+  { bg: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)', shadow: 'rgba(48, 207, 208, 0.3)' }, // Turquoise
+  { bg: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', shadow: 'rgba(168, 237, 234, 0.3)' }, // Pastel
+  { bg: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', shadow: 'rgba(255, 154, 158, 0.3)' }, // Rose clair
+  { bg: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', shadow: 'rgba(255, 236, 210, 0.3)' }, // Pêche
+  { bg: 'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)', shadow: 'rgba(255, 110, 127, 0.3)' }, // Rouge-bleu
+];
+
+// Fonction pour obtenir la couleur d'un élève
+const getEleveColor = (eleveId) => {
+  const index = eleveId % ELEVE_COLORS.length;
+  return ELEVE_COLORS[index];
+};
+
 const CalendrierApple = () => {
   const [view, setView] = useState('week'); // day, week, month, year
   const [currentDate, setCurrentDate] = useState(moment());
@@ -278,7 +298,14 @@ const ViewDay = ({ cours, currentDate, onClick }) => {
     const start = moment(c.date_debut);
     const top = (start.hours() * 60 + start.minutes() - 7 * 60) / 60 * 120;
     const height = moment(c.date_fin).diff(start, 'minutes') / 60 * 120;
-    return { top: `${top}px`, height: `${height}px` };
+    const eleveId = c.eleves?.[0]?.id || 0;
+    const color = getEleveColor(eleveId);
+    return {
+      top: `${top}px`,
+      height: `${height}px`,
+      background: color.bg,
+      boxShadow: `0 2px 8px ${color.shadow}`
+    };
   };
 
   const showLine = now.isSame(currentDate, 'day');
@@ -330,7 +357,14 @@ const ViewWeek = ({ cours, currentDate, onClick }) => {
     const start = moment(c.date_debut);
     const top = (start.hours() * 60 + start.minutes() - 7 * 60) / 60 * 120;
     const height = moment(c.date_fin).diff(start, 'minutes') / 60 * 120;
-    return { top: `${top}px`, height: `${height}px` };
+    const eleveId = c.eleves?.[0]?.id || 0;
+    const color = getEleveColor(eleveId);
+    return {
+      top: `${top}px`,
+      height: `${height}px`,
+      background: color.bg,
+      boxShadow: `0 2px 8px ${color.shadow}`
+    };
   };
 
   const showLine = now.isBetween(days[0].clone().startOf('day'), days[6].clone().endOf('day'));
@@ -411,13 +445,22 @@ const ViewMonth = ({ cours, currentDate, onClick }) => {
                 <div key={day.format('YYYY-MM-DD')} className={`month-cell ${!isCurrent ? 'other' : ''} ${isToday ? 'today' : ''}`}>
                   <div className="cell-num">{day.format('D')}</div>
                   <div className="cell-events">
-                    {dc.slice(0, 3).map(c => (
-                      <div key={c.id} className="event-chip" onClick={() => onClick(c)}>
-                        <span className="chip-time">{moment(c.date_debut).format('HH:mm')}</span>
-                        <span className="chip-title">{c.titre}</span>
-                        {c.is_recurrent && <span className="chip-recur">🔁</span>}
-                      </div>
-                    ))}
+                    {dc.slice(0, 3).map(c => {
+                      const eleveId = c.eleves?.[0]?.id || 0;
+                      const color = getEleveColor(eleveId);
+                      return (
+                        <div
+                          key={c.id}
+                          className="event-chip"
+                          style={{ background: color.bg, boxShadow: `0 2px 6px ${color.shadow}` }}
+                          onClick={() => onClick(c)}
+                        >
+                          <span className="chip-time">{moment(c.date_debut).format('HH:mm')}</span>
+                          <span className="chip-title">{c.titre}</span>
+                          {c.is_recurrent && <span className="chip-recur">🔁</span>}
+                        </div>
+                      );
+                    })}
                     {dc.length > 3 && <div className="more-events">+{dc.length - 3} de plus</div>}
                   </div>
                 </div>
@@ -514,12 +557,15 @@ const CoursModal = ({ cours, onClose, onUpdate }) => {
             <div className="modal-sec">
               <div className="sec-label">Élèves</div>
               <div className="eleves-chips">
-                {cours.eleves.map(e => (
-                  <div key={e.id} className="eleve-chip">
-                    <div className="avatar">{e.prenom[0]}{e.nom[0]}</div>
-                    <span>{e.prenom} {e.nom}</span>
-                  </div>
-                ))}
+                {cours.eleves.map(e => {
+                  const color = getEleveColor(e.id);
+                  return (
+                    <div key={e.id} className="eleve-chip">
+                      <div className="avatar" style={{ background: color.bg }}>{e.prenom[0]}{e.nom[0]}</div>
+                      <span>{e.prenom} {e.nom}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

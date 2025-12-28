@@ -226,18 +226,16 @@
   position: absolute;
   left: 8px;
   right: 8px;
-  background: linear-gradient(135deg, #5a98ab 0%, #437C8B 100%);
   border-radius: 8px;
   padding: 8px 12px;
   cursor: pointer;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(67, 124, 139, 0.3);
   transition: all 0.2s;
 }
 
 .cours-event:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(67, 124, 139, 0.4);
+  filter: brightness(1.1);
 }
 
 .event-time {
@@ -480,7 +478,6 @@
   align-items: center;
   gap: 4px;
   padding: 4px 6px;
-  background: linear-gradient(135deg, #5a98ab 0%, #437C8B 100%);
   border-radius: 4px;
   font-size: 11px;
   color: white;
@@ -491,7 +488,7 @@
 
 .event-chip:hover {
   transform: translateX(2px);
-  box-shadow: 0 2px 6px rgba(67, 124, 139, 0.3);
+  filter: brightness(1.1);
 }
 
 .chip-time {
@@ -720,7 +717,6 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #5a98ab 0%, #437C8B 100%);
   color: white;
   display: flex;
   align-items: center;
