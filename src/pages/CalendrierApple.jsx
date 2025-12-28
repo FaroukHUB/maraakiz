@@ -168,14 +168,17 @@ const CalendrierApple = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
+        // Construire les datetime complets pour l'API
+        const date_debut = `${formData.date}T${formData.heure_debut}:00`;
+        const date_fin = `${formData.date}T${formData.heure_fin}:00`;
+
         const dataToSend = {
           eleve_ids: formData.eleve_ids,
           titre,
           matiere: formData.matiere,
           description: formData.description,
-          date: formData.date,
-          heure_debut: formData.heure_debut,
-          heure_fin: formData.heure_fin,
+          date_debut: date_debut,
+          date_fin: date_fin,
           type_cours: 'en-ligne',
           lien_visio: formData.lien_visio,
           sync_to_google: formData.sync_to_google,
