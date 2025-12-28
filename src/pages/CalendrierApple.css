@@ -86,7 +86,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 16px;
-  background: #007aff;
+  background: #437C8B;
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -97,9 +97,9 @@
 }
 
 .btn-add-cours:hover {
-  background: #0051d5;
+  background: #35626f;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(67, 124, 139, 0.3);
 }
 
 .btn-add-cours .btn-icon {

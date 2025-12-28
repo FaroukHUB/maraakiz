@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import moment from 'moment';
 import 'moment/dist/locale/fr';
@@ -8,13 +9,13 @@ import './CalendrierApple.css';
 moment.locale('fr');
 
 const CalendrierApple = () => {
+  const navigate = useNavigate();
   const [view, setView] = useState('week'); // day, week, month, year
   const [currentDate, setCurrentDate] = useState(moment());
   const [cours, setCours] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedCours, setSelectedCours] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -105,7 +106,7 @@ const CalendrierApple = () => {
         </div>
 
         <div className="toolbar-right">
-          <button className="btn-add-cours" onClick={() => setShowAddModal(true)}>
+          <button className="btn-add-cours" onClick={() => navigate('/dashboard/eleves')}>
             <span className="btn-icon">+</span>
             Nouveau cours
           </button>
