@@ -62,13 +62,16 @@ const DashboardEleveDetail = () => {
   const fetchCours = async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log('Fetching cours for eleve_id:', id);
       const response = await axios.get(`${API_URL}/api/calendrier/cours`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { eleve_id: id }
       });
+      console.log('Cours received:', response.data);
       setCours(response.data);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur chargement cours:', error);
+      console.error('Error details:', error.response?.data);
     }
   };
 
