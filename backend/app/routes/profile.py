@@ -92,6 +92,7 @@ class CompleteProfileResponse(BaseModel):
 
     # Merkez info
     merkez_id: Optional[int]
+    merkez_type: Optional[str]  # professeur or institut
     nom: Optional[str]
     telephone: Optional[str]
     site_web: Optional[str]
@@ -310,6 +311,7 @@ async def get_complete_profile(
         if merkez:
             user_data.update({
                 "merkez_id": merkez.id,
+                "merkez_type": merkez.type,  # professeur or institut
                 "nom": merkez.nom,
                 "telephone": merkez.telephone,
                 "site_web": merkez.site_web,
@@ -340,6 +342,7 @@ async def get_complete_profile(
             # Merkez not found, fill with None
             user_data.update({
                 "merkez_id": None,
+                "merkez_type": None,
                 "nom": None,
                 "telephone": None,
                 "site_web": None,
@@ -370,6 +373,7 @@ async def get_complete_profile(
         # No merkez_id, fill with None
         user_data.update({
             "merkez_id": None,
+            "merkez_type": None,
             "nom": None,
             "telephone": None,
             "site_web": None,

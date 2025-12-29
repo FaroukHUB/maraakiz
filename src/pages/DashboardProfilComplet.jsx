@@ -455,7 +455,11 @@ const DashboardProfilComplet = () => {
                 </label>
                 <input
                   type="text"
-                  value={profile?.user_type === 'prof' ? 'Professeur' : 'Élève'}
+                  value={
+                    profile?.merkez_type === 'institut' ? 'Institut' :
+                    profile?.merkez_type === 'professeur' ? 'Professeur' :
+                    profile?.user_type === 'prof' ? 'Professeur' : 'Élève'
+                  }
                   disabled
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 cursor-not-allowed"
                 />

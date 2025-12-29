@@ -83,7 +83,7 @@ const ProfProfile = () => {
                 {/* Photo */}
                 <div className="relative h-64 sm:h-80">
                   <img
-                    src={prof.image || "https://via.placeholder.com/400"}
+                    src={prof.avatar_url || prof.image || "https://via.placeholder.com/400"}
                     alt={prof.nom}
                     className="w-full h-full object-cover"
                   />

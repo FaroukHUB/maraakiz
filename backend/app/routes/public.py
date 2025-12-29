@@ -122,10 +122,16 @@ def get_merkez_detail(merkez_id: int, db: Session = Depends(get_db)):
     """
     Récupère les détails complets d'un professeur/institut
     """
+    from app.models.user import User
+
     merkez = db.query(Merkez).filter(Merkez.id == merkez_id, Merkez.actif == True).first()
 
     if not merkez:
         return {"error": "Merkez not found"}, 404
+
+    # Get user avatar if exists
+    user = db.query(User).filter(User.merkez_id == merkez_id).first()
+    avatar_url = user.avatar_url if user else None
 
     return {
         "id": merkez.id,
@@ -133,6 +139,7 @@ def get_merkez_detail(merkez_id: int, db: Session = Depends(get_db)):
         "nom": merkez.nom,
         "email": merkez.email,
         "telephone": merkez.telephone,
+        "avatar_url": avatar_url,
         # Champs professeur
         "cursus": merkez.cursus,
         # Champs institut
