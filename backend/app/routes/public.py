@@ -32,6 +32,8 @@ def get_public_merkez(
     Logique GLOBALE :
     (type_prof OR type_inst) AND (mat_coran OR mat_arabe) AND (fmt_ligne OR fmt_pres) etc.
     """
+    from app.models.user import User
+
     # Récupérer tous les merkez actifs
     all_merkez = db.query(Merkez).filter(Merkez.actif == True).all()
 
@@ -93,13 +95,19 @@ def get_public_merkez(
     # Trier par note moyenne décroissante
     results.sort(key=lambda x: x.note_moyenne or 0, reverse=True)
 
-    # Convertir en dict
-    return [
-        {
+    # Convertir en dict avec avatar
+    result_list = []
+    for m in results:
+        # Get user avatar if exists
+        user = db.query(User).filter(User.merkez_id == m.id).first()
+        avatar_url = user.avatar_url if user else None
+
+        result_list.append({
             "id": m.id,
             "type": m.type,
             "nom": m.nom,
-            "image": m.image_url,
+            "image": avatar_url or m.image_url,  # Use avatar first, fallback to image_url
+            "avatar_url": avatar_url,
             "note": m.note_moyenne,
             "nbAvis": m.nombre_avis,
             "matieres": m.matieres or [],
@@ -113,9 +121,9 @@ def get_public_merkez(
                 "premierCoursGratuit": m.premier_cours_gratuit
             },
             "bio": m.bio
-        }
-        for m in results
-    ]
+        })
+
+    return result_list
 
 @router.get("/merkez/{merkez_id}")
 def get_merkez_detail(merkez_id: int, db: Session = Depends(get_db)):
