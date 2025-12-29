@@ -371,11 +371,18 @@ const DashboardProfilComplet = () => {
                   📁 Formats: JPG, PNG, WEBP (max 5MB)
                 </p>
 
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mt-2 mb-4">
+                  <p className="text-red-700 font-semibold flex items-center text-sm">
+                    <AlertCircle size={18} className="mr-2" />
+                    ⚠️ Photo d'âme interdite
+                  </p>
+                </div>
+
                 {showWarning && (
-                  <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mt-4">
-                    <p className="text-red-700 font-semibold flex items-center">
-                      <AlertCircle size={20} className="mr-2" />
-                      ⚠️ Images de représentation d'âme interdite
+                  <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-lg mt-4">
+                    <p className="text-orange-700 font-semibold flex items-center text-sm">
+                      <AlertCircle size={18} className="mr-2" />
+                      ✅ Photo personnalisée uploadée
                     </p>
                   </div>
                 )}
