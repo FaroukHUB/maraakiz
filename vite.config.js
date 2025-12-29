@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     proxy: {
       "/dashboard/api": "http://localhost:3001",
+      "/api": "http://localhost:8000",
+      "/avatars": "http://localhost:8000",
+      "/uploads": "http://localhost:8000"
     },
   },
 });
