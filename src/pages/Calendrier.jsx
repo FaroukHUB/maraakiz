@@ -868,15 +868,7 @@ const Calendrier = () => {
                 <label>📊 Statut</label>
                 <select
                   value={formData.statut}
-                  onChange={(e) => {
-                    const newStatut = e.target.value;
-                    setFormData({ ...formData, statut: newStatut });
-
-                    // Si on marque comme terminé, ouvrir le modal de rapport
-                    if (newStatut === 'termine' && selectedEvent) {
-                      setShowRapportModal(true);
-                    }
-                  }}
+                  onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
                   className="modern-select"
                 >
                   <option value="planifie">📅 À venir</option>
@@ -917,6 +909,18 @@ const Calendrier = () => {
                   </button>
                 )}
                 <div className="modal-actions-right">
+                  {selectedEvent && formData.statut !== 'termine' && (
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      style={{backgroundColor: '#10b981', marginRight: '10px'}}
+                      onClick={() => {
+                        setShowRapportModal(true);
+                      }}
+                    >
+                      ✅ Marquer comme terminé
+                    </button>
+                  )}
                   <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
                     Annuler
                   </button>
