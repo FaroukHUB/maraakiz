@@ -24,8 +24,8 @@ const PaiementsV2 = () => {
 
   const [formData, setFormData] = useState({
     eleve_id: '',
-    mois: new Date().getMonth() + 1,
-    annee: new Date().getFullYear(),
+    mois: currentMonth,
+    annee: currentYear,
     montant_du: '',
     montant_paye: 0,
     date_echeance: '',
@@ -176,7 +176,10 @@ const PaiementsV2 = () => {
 
       console.log('[DEBUG] Payment created:', response.data);
 
-      alert('✅ Paiement créé avec succès!');
+      // Navigate to the month of the created payment
+      const createdMois = response.data.mois;
+      const createdAnnee = response.data.annee;
+
       setShowAddModal(false);
       setFormData({
         eleve_id: '',
@@ -189,9 +192,17 @@ const PaiementsV2 = () => {
         notes: ''
       });
 
-      console.log('[DEBUG] Fetching data after payment creation...');
-      await fetchData();
-      console.log('[DEBUG] Data fetched, paiements count:', paiements.length);
+      // If payment was created for a different month, navigate to it
+      if (createdMois !== currentMonth || createdAnnee !== currentYear) {
+        setCurrentMonth(createdMois);
+        setCurrentYear(createdAnnee);
+        alert(`✅ Paiement créé avec succès pour ${getMoisNom(createdMois)} ${createdAnnee}!`);
+      } else {
+        alert('✅ Paiement créé avec succès!');
+        console.log('[DEBUG] Fetching data after payment creation...');
+        await fetchData();
+        console.log('[DEBUG] Data fetched, paiements count:', paiements.length);
+      }
     } catch (err) {
       console.error('Erreur complète:', err.response?.data);
       alert(err.response?.data?.detail || 'Erreur lors de l\'ajout du paiement');
