@@ -39,6 +39,7 @@ class UserResponse(BaseModel):
     nom: str
     type: str
     merkez_id: Optional[int] = None
+    institut_id: Optional[int] = None
 
 class Token(BaseModel):
     access_token: str
@@ -142,7 +143,8 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         email=new_user.email,
         nom=new_user.full_name,
         type=user_data.type,  # Return original type from frontend
-        merkez_id=merkez_id
+        merkez_id=merkez_id,
+        institut_id=new_user.institut_id
     )
 
     return Token(
@@ -197,7 +199,8 @@ async def login(
         email=user.email,
         nom=user.full_name or "",
         type=frontend_type,
-        merkez_id=user.merkez_id
+        merkez_id=user.merkez_id,
+        institut_id=user.institut_id
     )
 
     return Token(
@@ -245,5 +248,6 @@ async def get_current_user(
         email=user.email,
         nom=user.full_name or "",
         type=frontend_type,
-        merkez_id=user.merkez_id
+        merkez_id=user.merkez_id,
+        institut_id=user.institut_id
     )

@@ -16,6 +16,11 @@ class User(Base):
     # Lien vers merkez_id si c'est un prof
     merkez_id = Column(Integer, nullable=True)
 
+    # Institut ID - pour différencier prof indépendant vs salarié
+    # NULL = prof indépendant (apparaît sur le site public)
+    # ID = prof salarié (géré par un institut, n'apparaît pas publiquement)
+    institut_id = Column(Integer, nullable=True)
+
     # Avatar pour les professeurs
     genre = Column(String(20), nullable=True)  # "homme", "femme"
     avatar_url = Column(String(255), nullable=True)  # Chemin vers l'avatar (default ou custom)

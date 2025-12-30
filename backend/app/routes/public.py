@@ -100,6 +100,12 @@ def get_public_merkez(
     for m in results:
         # Get user avatar if exists
         user = db.query(User).filter(User.merkez_id == m.id).first()
+
+        # IMPORTANT: Only show independent professors (institut_id IS NULL)
+        # Salaried professors (institut_id != NULL) should not appear on public site
+        if user and user.institut_id is not None:
+            continue  # Skip salaried professors
+
         avatar_url = user.avatar_url if user else None
 
         result_list.append({
@@ -129,6 +135,7 @@ def get_public_merkez(
 def get_merkez_detail(merkez_id: int, db: Session = Depends(get_db)):
     """
     Récupère les détails complets d'un professeur/institut
+    IMPORTANT: Only shows independent professors (institut_id IS NULL)
     """
     from app.models.user import User
 
@@ -139,6 +146,12 @@ def get_merkez_detail(merkez_id: int, db: Session = Depends(get_db)):
 
     # Get user avatar if exists
     user = db.query(User).filter(User.merkez_id == merkez_id).first()
+
+    # IMPORTANT: Only show independent professors (institut_id IS NULL)
+    # Salaried professors should not be accessible on public site
+    if user and user.institut_id is not None:
+        return {"error": "Merkez not found"}, 404
+
     avatar_url = user.avatar_url if user else None
 
     return {
