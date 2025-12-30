@@ -157,10 +157,22 @@ const PaiementsV2 = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API_BASE_URL}/api/paiements/`, formData, {
+
+      // Convert data to correct types
+      const payload = {
+        ...formData,
+        eleve_id: parseInt(formData.eleve_id),
+        mois: parseInt(formData.mois),
+        annee: parseInt(formData.annee),
+        montant_du: parseFloat(formData.montant_du),
+        montant_paye: parseFloat(formData.montant_paye) || 0
+      };
+
+      await axios.post(`${API_BASE_URL}/api/paiements/`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      alert('✅ Paiement créé avec succès!');
       setShowAddModal(false);
       setFormData({
         eleve_id: '',
@@ -174,6 +186,7 @@ const PaiementsV2 = () => {
       });
       fetchData();
     } catch (err) {
+      console.error('Erreur complète:', err.response?.data);
       alert(err.response?.data?.detail || 'Erreur lors de l\'ajout du paiement');
     }
   };
@@ -566,7 +579,7 @@ const PaiementsV2 = () => {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Mois *</label>
                     <select
                       value={formData.mois}
-                      onChange={(e) => setFormData({ ...formData, mois: parseInt(e.target.value) })}
+                      onChange={(e) => setFormData({ ...formData, mois: e.target.value })}
                       required
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
                     >
@@ -581,7 +594,7 @@ const PaiementsV2 = () => {
                     <input
                       type="number"
                       value={formData.annee}
-                      onChange={(e) => setFormData({ ...formData, annee: parseInt(e.target.value) })}
+                      onChange={(e) => setFormData({ ...formData, annee: e.target.value })}
                       required
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
                     />
@@ -594,7 +607,7 @@ const PaiementsV2 = () => {
                     type="number"
                     step="0.01"
                     value={formData.montant_du}
-                    onChange={(e) => setFormData({ ...formData, montant_du: parseFloat(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, montant_du: e.target.value })}
                     placeholder="150.00"
                     required
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
