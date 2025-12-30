@@ -36,23 +36,41 @@ const DashboardLayout = ({ children }) => {
   };
 
   // Navigation items based on user type
-  const navigationItems = user?.type === "eleve" ? [
-    { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
-    { name: "Mes rapports", path: "/dashboard/mes-rapports", icon: BookOpen },
-    { name: "Mes professeurs", path: "/dashboard/mes-professeurs", icon: Users },
-    { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
-    { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
-  ] : [
-    { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
-    { name: "Mes élèves", path: "/dashboard/eleves", icon: Users },
-    { name: "Calendrier", path: "/dashboard/calendrier", icon: Calendar },
-    { name: "Mes cours", path: "/dashboard/mes-cours", icon: BookOpen },
-    { name: "Bibliothèque", path: "/dashboard/bibliotheque", icon: Library },
-    { name: "Paiements", path: "/dashboard/paiements", icon: CreditCard },
-    { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
-    { name: "Mon profil", path: "/dashboard/profil", icon: User },
-    { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
-  ];
+  const getNavigationItems = () => {
+    if (user?.type === "eleve") {
+      return [
+        { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
+        { name: "Mes rapports", path: "/dashboard/mes-rapports", icon: BookOpen },
+        { name: "Mes professeurs", path: "/dashboard/mes-professeurs", icon: Users },
+        { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
+        { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
+      ];
+    } else if (user?.type === "institut") {
+      return [
+        { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
+        { name: "Professeurs", path: "/dashboard/professeurs", icon: Users },
+        { name: "Élèves", path: "/dashboard/eleves", icon: Users },
+        { name: "Paiements", path: "/dashboard/paiements", icon: CreditCard },
+        { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
+        { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
+      ];
+    } else {
+      // Professeur
+      return [
+        { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
+        { name: "Mes élèves", path: "/dashboard/eleves", icon: Users },
+        { name: "Calendrier", path: "/dashboard/calendrier", icon: Calendar },
+        { name: "Mes cours", path: "/dashboard/mes-cours", icon: BookOpen },
+        { name: "Bibliothèque", path: "/dashboard/bibliotheque", icon: Library },
+        { name: "Paiements", path: "/dashboard/paiements", icon: CreditCard },
+        { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
+        { name: "Mon profil", path: "/dashboard/profil", icon: User },
+        { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
+      ];
+    }
+  };
+
+  const navigationItems = getNavigationItems();
 
   return (
     <div className="min-h-screen bg-gray-50">
