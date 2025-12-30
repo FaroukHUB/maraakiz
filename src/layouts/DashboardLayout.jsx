@@ -66,19 +66,19 @@ const DashboardLayout = ({ children }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-40 h-screen w-72 bg-white border-r border-gray-200 transition-transform duration-300 ${
+        className={`fixed top-0 left-0 z-40 h-screen w-72 bg-white border-r border-gray-200 transition-transform duration-300 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         {/* Logo */}
-        <div className="h-20 flex items-center justify-center border-b border-gray-200">
+        <div className="h-20 flex items-center justify-center border-b border-gray-200 flex-shrink-0">
           <Link to="/" className="text-2xl font-bold text-[#437C8B]">
             Maraakiz
           </Link>
         </div>
 
         {/* User info */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 rounded-full bg-[#437C8B] flex items-center justify-center text-white font-semibold text-lg">
               {user?.nom?.charAt(0) || "U"}
@@ -92,8 +92,8 @@ const DashboardLayout = ({ children }) => {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="p-4 space-y-1">
+        {/* Navigation - flex-1 to take remaining space with overflow */}
+        <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
           {navigationItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -115,8 +115,8 @@ const DashboardLayout = ({ children }) => {
           })}
         </nav>
 
-        {/* Logout button */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+        {/* Logout button - flex-shrink-0 to keep at bottom */}
+        <div className="p-4 border-t border-gray-200 flex-shrink-0">
           <button
             onClick={handleLogout}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all"
