@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.database import engine, Base
-from app.routes import public, auth, eleves, merkez, messages, paiements, notes_cours, calendrier, profile
+from app.routes import public, auth, eleves, merkez, messages, paiements, notes_cours, calendrier, profile, bibliotheque
 from pathlib import Path
 
 # Import all models to ensure tables are created
@@ -13,7 +13,8 @@ from app.models import (
     cours as cours_model,
     message as message_model,
     paiement as paiement_model,
-    notes_cours as notes_cours_model
+    notes_cours as notes_cours_model,
+    bibliotheque as bibliotheque_model
 )
 
 # Créer les tables
@@ -40,6 +41,7 @@ app.include_router(calendrier.router, prefix="/api/calendrier", tags=["Calendrie
 app.include_router(messages.router, prefix="/api/messages", tags=["Messages"])
 app.include_router(paiements.router, prefix="/api/paiements", tags=["Paiements"])
 app.include_router(notes_cours.router, prefix="/api/notes-cours", tags=["Notes de Cours"])
+app.include_router(bibliotheque.router, prefix="/api/bibliotheque", tags=["Bibliothèque"])
 
 # Serve static files (avatars and uploads)
 BASE_DIR = Path(__file__).resolve().parent.parent

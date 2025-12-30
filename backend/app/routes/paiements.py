@@ -313,6 +313,77 @@ async def update_paiement(
     return paiement
 
 
+@router.post("/{paiement_id}/add-partial")
+async def add_partial_payment(
+    paiement_id: int,
+    montant: float,
+    methode_paiement: str = "especes",
+    notes: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Add a partial payment to an existing payment record
+    """
+    if not current_user.merkez_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous devez être professeur ou institut"
+        )
+
+    paiement = db.query(Paiement).filter(
+        Paiement.id == paiement_id,
+        Paiement.merkez_id == current_user.merkez_id
+    ).first()
+
+    if not paiement:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Paiement non trouvé"
+        )
+
+    # Check if adding this amount would exceed the amount due
+    new_total = paiement.montant_paye + montant
+    if new_total > paiement.montant_du:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Le montant payé ({new_total}€) dépasserait le montant dû ({paiement.montant_du}€)"
+        )
+
+    # Add to montant_paye
+    paiement.montant_paye = new_total
+    paiement.methode_paiement = methode_paiement
+
+    # Update notes
+    if notes:
+        existing_notes = paiement.notes or ""
+        timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
+        paiement.notes = f"{existing_notes}\n[{timestamp}] Paiement partiel de {montant}€ - {notes}".strip()
+
+    # Recalculate status
+    paiement.statut = calculate_statut(
+        paiement.montant_du,
+        paiement.montant_paye,
+        paiement.date_echeance
+    )
+
+    # If fully paid now, set payment date
+    if paiement.montant_paye >= paiement.montant_du:
+        paiement.date_paiement = date.today()
+
+    db.commit()
+    db.refresh(paiement)
+
+    return {
+        "success": True,
+        "paiement": paiement,
+        "montant_ajoute": montant,
+        "nouveau_total": paiement.montant_paye,
+        "reste_a_payer": paiement.montant_du - paiement.montant_paye,
+        "statut": paiement.statut
+    }
+
+
 @router.post("/{paiement_id}/mark-paid", response_model=PaiementResponse)
 async def mark_as_paid(
     paiement_id: int,

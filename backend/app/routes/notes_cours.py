@@ -297,3 +297,133 @@ async def delete_notes(
     db.commit()
 
     return None
+
+
+@router.post("/{notes_id}/upload", response_model=NotesCoursResponse)
+async def upload_file_to_notes(
+    notes_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload file to course notes (PDF, images, audio, video)
+    """
+    if not current_user.merkez_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous devez être professeur ou institut"
+        )
+
+    # Verify notes exist and belong to professor
+    notes = db.query(NotesCours).filter(
+        NotesCours.id == notes_id,
+        NotesCours.merkez_id == current_user.merkez_id
+    ).first()
+
+    if not notes:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notes non trouvées"
+        )
+
+    # Check file type
+    allowed_types = [
+        "application/pdf",
+        "image/jpeg", "image/jpg", "image/png", "image/webp",
+        "audio/mpeg", "audio/mp3", "audio/wav",
+        "video/mp4", "video/webm"
+    ]
+
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Type de fichier non autorisé"
+        )
+
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_extension = Path(file.filename).suffix
+    original_name = Path(file.filename).stem
+    new_filename = f"{original_name}_{timestamp}{file_extension}"
+    file_path = UPLOAD_DIR / new_filename
+
+    # Save file
+    try:
+        with file_path.open("wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lors de l'upload: {str(e)}"
+        )
+
+    # Update fichiers JSON field
+    if notes.fichiers is None:
+        notes.fichiers = []
+
+    file_info = {
+        "nom": file.filename,
+        "url": f"/uploads/notes/{new_filename}",
+        "type": file.content_type,
+        "uploaded_at": datetime.now().isoformat()
+    }
+
+    notes.fichiers.append(file_info)
+
+    db.commit()
+    db.refresh(notes)
+
+    return notes
+
+
+@router.delete("/{notes_id}/files/{file_index}", response_model=NotesCoursResponse)
+async def delete_file_from_notes(
+    notes_id: int,
+    file_index: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a file from course notes
+    """
+    if not current_user.merkez_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous devez être professeur ou institut"
+        )
+
+    notes = db.query(NotesCours).filter(
+        NotesCours.id == notes_id,
+        NotesCours.merkez_id == current_user.merkez_id
+    ).first()
+
+    if not notes:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notes non trouvées"
+        )
+
+    if not notes.fichiers or file_index >= len(notes.fichiers):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fichier non trouvé"
+        )
+
+    # Delete physical file
+    file_info = notes.fichiers[file_index]
+    file_path = Path(file_info["url"].lstrip("/"))
+    if file_path.exists():
+        try:
+            file_path.unlink()
+        except Exception as e:
+            print(f"Error deleting file: {e}")
+
+    # Remove from JSON array
+    notes.fichiers.pop(file_index)
+
+    db.commit()
+    db.refresh(notes)
+
+    return notes
