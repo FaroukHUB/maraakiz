@@ -19,6 +19,11 @@ const PaiementsV2 = () => {
   const [archivedMonths, setArchivedMonths] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showArchivesModal, setShowArchivesModal] = useState(false);
+  const [showPartialPaymentModal, setShowPartialPaymentModal] = useState(false);
+  const [selectedPaiement, setSelectedPaiement] = useState(null);
+  const [partialAmount, setPartialAmount] = useState('');
+  const [partialMethode, setPartialMethode] = useState('especes');
+  const [partialNotes, setPartialNotes] = useState('');
   const [selectedStatut, setSelectedStatut] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -239,6 +244,38 @@ const PaiementsV2 = () => {
       fetchData();
     } catch (err) {
       alert(err.response?.data?.detail || 'Erreur');
+    }
+  };
+
+  const handleAddPartialPayment = async (e) => {
+    e.preventDefault();
+
+    if (!selectedPaiement) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_BASE_URL}/api/paiements/${selectedPaiement.id}/add-partial`,
+        null,
+        {
+          params: {
+            montant: parseFloat(partialAmount),
+            methode_paiement: partialMethode,
+            notes: partialNotes
+          },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      alert('✅ Paiement partiel ajouté avec succès!');
+      setShowPartialPaymentModal(false);
+      setSelectedPaiement(null);
+      setPartialAmount('');
+      setPartialMethode('especes');
+      setPartialNotes('');
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Erreur lors de l\'ajout du paiement partiel');
     }
   };
 
@@ -534,6 +571,16 @@ const PaiementsV2 = () => {
                           {paiement.statut !== 'paye' && (
                             <>
                               <button
+                                onClick={() => {
+                                  setSelectedPaiement(paiement);
+                                  setShowPartialPaymentModal(true);
+                                }}
+                                className="p-2 hover:bg-yellow-100 rounded-lg transition-colors"
+                                title="Ajouter un paiement partiel"
+                              >
+                                <Plus size={18} className="text-yellow-600" />
+                              </button>
+                              <button
                                 onClick={() => handleSendLink(paiement.id)}
                                 className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
                                 title="Envoyer un lien"
@@ -734,6 +781,105 @@ const PaiementsV2 = () => {
                   Fermer
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Paiement Partiel */}
+        {showPartialPaymentModal && selectedPaiement && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowPartialPaymentModal(false)}>
+            <div className="bg-white rounded-2xl max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6 border-b-2 border-gray-100">
+                <h2 className="text-2xl font-bold text-gray-900">💰 Paiement Partiel</h2>
+                <p className="text-sm text-gray-600 mt-2">
+                  {selectedPaiement.eleve_prenom} {selectedPaiement.eleve_nom}
+                </p>
+              </div>
+
+              <form onSubmit={handleAddPartialPayment} className="p-6 space-y-6">
+                {/* Récapitulatif */}
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Total dû</p>
+                      <p className="text-lg font-bold text-gray-900">{selectedPaiement.montant_du?.toFixed(2)} €</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Déjà payé</p>
+                      <p className="text-lg font-bold text-green-600">{selectedPaiement.montant_paye?.toFixed(2)} €</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Reste à payer</p>
+                      <p className="text-lg font-bold text-yellow-600">
+                        {(selectedPaiement.montant_du - selectedPaiement.montant_paye)?.toFixed(2)} €
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Montant du paiement (€) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={partialAmount}
+                    onChange={(e) => setPartialAmount(e.target.value)}
+                    placeholder="Ex: 30.00"
+                    max={selectedPaiement.montant_du - selectedPaiement.montant_paye}
+                    required
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Maximum: {(selectedPaiement.montant_du - selectedPaiement.montant_paye)?.toFixed(2)} €
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Méthode de paiement</label>
+                  <select
+                    value={partialMethode}
+                    onChange={(e) => setPartialMethode(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
+                  >
+                    <option value="especes">💵 Espèces</option>
+                    <option value="virement">🏦 Virement</option>
+                    <option value="cheque">📝 Chèque</option>
+                    <option value="carte">💳 Carte bancaire</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Notes (optionnel)</label>
+                  <textarea
+                    value={partialNotes}
+                    onChange={(e) => setPartialNotes(e.target.value)}
+                    placeholder="Ex: Premier versement, Acompte..."
+                    rows="2"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
+                  />
+                </div>
+
+                <div className="flex space-x-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPartialPaymentModal(false);
+                      setSelectedPaiement(null);
+                      setPartialAmount('');
+                      setPartialNotes('');
+                    }}
+                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                  >
+                    Ajouter le paiement
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
