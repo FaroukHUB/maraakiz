@@ -66,6 +66,18 @@ const Calendrier = () => {
   const [view, setView] = useState('month');
   const [date, setDate] = useState(new Date());
   const [isRecurrent, setIsRecurrent] = useState(false);  // Nouveau : toggle pour cours récurrent
+  const [showRapportModal, setShowRapportModal] = useState(false);  // Modal rapport de cours
+  const [rapportData, setRapportData] = useState({
+    resume: '',
+    vu_en_cours: '',
+    devoirs: '',
+    a_revoir: '',
+    a_voir_prochaine_fois: '',
+    commentaire_prof: '',
+    progression_pourcentage: 0,
+    note: ''
+  });
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const [formData, setFormData] = useState({
     eleve_ids: [],
@@ -338,6 +350,150 @@ const Calendrier = () => {
     setSelectedEvent(null);
     setSelectedDate(null);
     setIsRecurrent(false);
+  };
+
+  const handleRapportSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!selectedEvent) return;
+
+    try {
+      const token = localStorage.getItem('token');
+
+      // First, update course status to 'termine'
+      const date_debut = `${formData.date}T${formData.heure_debut}`;
+      const date_fin = `${formData.date}T${formData.heure_fin}`;
+
+      const elevesSelectionnes = eleves.filter(e => formData.eleve_ids.includes(e.id));
+      const titre = elevesSelectionnes.length > 0
+        ? `Cours ${formData.matiere} - ${elevesSelectionnes.map(e => e.prenom).join(', ')}`
+        : `Cours ${formData.matiere}`;
+
+      const courseDataToSend = {
+        ...formData,
+        titre,
+        date_debut,
+        date_fin,
+        type_cours: 'en-ligne',
+        statut: 'termine' // Make sure status is termine
+      };
+
+      delete courseDataToSend.date;
+      delete courseDataToSend.heure_debut;
+      delete courseDataToSend.heure_fin;
+      delete courseDataToSend.recurrence_schedule;
+      delete courseDataToSend.recurrence_end_date;
+
+      await axios.put(
+        `${API_URL}/api/calendrier/cours/${selectedEvent.id}`,
+        courseDataToSend,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Create or update course notes
+      const response = await axios.post(
+        `${API_URL}/api/notes-cours/`,
+        {
+          cours_id: selectedEvent.id,
+          ...rapportData
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const notesId = response.data.id;
+
+      // Upload files if any
+      for (const file of uploadedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        await axios.post(
+          `${API_URL}/api/notes-cours/${notesId}/upload`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+      }
+
+      alert('✅ Cours marqué comme terminé et rapport enregistré avec succès !');
+      setShowRapportModal(false);
+      setShowModal(false);
+      setRapportData({
+        resume: '',
+        vu_en_cours: '',
+        devoirs: '',
+        a_revoir: '',
+        a_voir_prochaine_fois: '',
+        commentaire_prof: '',
+        progression_pourcentage: 0,
+        note: ''
+      });
+      setUploadedFiles([]);
+      resetForm();
+      fetchCours(); // Refresh course list
+    } catch (error) {
+      console.error('Erreur lors de l\'enregistrement du rapport:', error);
+      // If notes already exist, try updating
+      if (error.response?.status === 400) {
+        try {
+          const token = localStorage.getItem('token');
+          // Get existing notes first
+          const getResponse = await axios.get(
+            `${API_URL}/api/notes-cours/cours/${selectedEvent.id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          const notesId = getResponse.data.id;
+
+          // Update notes
+          await axios.put(
+            `${API_URL}/api/notes-cours/${notesId}`,
+            rapportData,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          // Upload new files
+          for (const file of uploadedFiles) {
+            const formDataFile = new FormData();
+            formDataFile.append('file', file);
+
+            await axios.post(
+              `${API_URL}/api/notes-cours/${notesId}/upload`,
+              formDataFile,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'multipart/form-data'
+                }
+              }
+            );
+          }
+
+          alert('✅ Rapport de cours mis à jour avec succès !');
+          setShowRapportModal(false);
+          setRapportData({
+            resume: '',
+            vu_en_cours: '',
+            devoirs: '',
+            a_revoir: '',
+            a_voir_prochaine_fois: '',
+            commentaire_prof: '',
+            progression_pourcentage: 0,
+            note: ''
+          });
+          setUploadedFiles([]);
+        } catch (updateError) {
+          console.error('Erreur lors de la mise à jour:', updateError);
+          alert('Erreur lors de l\'enregistrement du rapport');
+        }
+      } else {
+        alert('Erreur lors de l\'enregistrement du rapport');
+      }
+    }
   };
 
   const handleTrameSelect = (trameId) => {
@@ -712,7 +868,15 @@ const Calendrier = () => {
                 <label>📊 Statut</label>
                 <select
                   value={formData.statut}
-                  onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
+                  onChange={(e) => {
+                    const newStatut = e.target.value;
+                    setFormData({ ...formData, statut: newStatut });
+
+                    // Si on marque comme terminé, ouvrir le modal de rapport
+                    if (newStatut === 'termine' && selectedEvent) {
+                      setShowRapportModal(true);
+                    }
+                  }}
                   className="modern-select"
                 >
                   <option value="planifie">📅 À venir</option>
@@ -772,6 +936,139 @@ const Calendrier = () => {
           <div className="day-view-content">
             <h2>{moment(selectedDate).format('dddd D MMMM YYYY')}</h2>
             {/* À implémenter: liste des cours du jour avec détails */}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Rapport de Cours */}
+      {showRapportModal && (
+        <div className="modal-overlay" onClick={() => setShowRapportModal(false)}>
+          <div className="modal-content" style={{maxWidth: '800px'}} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📝 Rapport de Cours</h2>
+              <button className="modal-close" onClick={() => setShowRapportModal(false)}>×</button>
+            </div>
+
+            <form onSubmit={handleRapportSubmit} className="cours-form">
+              <div className="form-group">
+                <label>📋 Résumé du cours</label>
+                <textarea
+                  value={rapportData.resume}
+                  onChange={(e) => setRapportData({ ...rapportData, resume: e.target.value })}
+                  rows="3"
+                  placeholder="Résumé général du cours..."
+                  className="modern-textarea"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>✅ Vu en cours</label>
+                <textarea
+                  value={rapportData.vu_en_cours}
+                  onChange={(e) => setRapportData({ ...rapportData, vu_en_cours: e.target.value })}
+                  rows="3"
+                  placeholder="Points abordés, chapitres traités..."
+                  className="modern-textarea"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>📚 Devoirs donnés</label>
+                <textarea
+                  value={rapportData.devoirs}
+                  onChange={(e) => setRapportData({ ...rapportData, devoirs: e.target.value })}
+                  rows="2"
+                  placeholder="Devoirs à faire pour le prochain cours..."
+                  className="modern-textarea"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>🔄 À revoir</label>
+                <textarea
+                  value={rapportData.a_revoir}
+                  onChange={(e) => setRapportData({ ...rapportData, a_revoir: e.target.value })}
+                  rows="2"
+                  placeholder="Points à réviser..."
+                  className="modern-textarea"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>➡️ À voir la prochaine fois</label>
+                <textarea
+                  value={rapportData.a_voir_prochaine_fois}
+                  onChange={(e) => setRapportData({ ...rapportData, a_voir_prochaine_fois: e.target.value })}
+                  rows="2"
+                  placeholder="Programme du prochain cours..."
+                  className="modern-textarea"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>💬 Commentaire du professeur</label>
+                <textarea
+                  value={rapportData.commentaire_prof}
+                  onChange={(e) => setRapportData({ ...rapportData, commentaire_prof: e.target.value })}
+                  rows="2"
+                  placeholder="Observations, remarques..."
+                  className="modern-textarea"
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>📊 Progression (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={rapportData.progression_pourcentage}
+                    onChange={(e) => setRapportData({ ...rapportData, progression_pourcentage: parseInt(e.target.value) || 0 })}
+                    className="modern-select"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>⭐ Note / Appréciation</label>
+                  <input
+                    type="text"
+                    value={rapportData.note}
+                    onChange={(e) => setRapportData({ ...rapportData, note: e.target.value })}
+                    placeholder="Ex: Très bien, Bon travail..."
+                    className="modern-select"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>📎 Fichiers (PDF, images, audio, vidéo)</label>
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,.mp3,.wav,.mp4,.webm"
+                  onChange={(e) => setUploadedFiles(Array.from(e.target.files))}
+                  className="modern-select"
+                />
+                {uploadedFiles.length > 0 && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    {uploadedFiles.length} fichier(s) sélectionné(s)
+                  </p>
+                )}
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => {
+                  setShowRapportModal(false);
+                  setFormData({ ...formData, statut: 'planifie' }); // Reset status if cancelled
+                }}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn-primary">
+                  Enregistrer le rapport
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

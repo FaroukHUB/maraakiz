@@ -332,6 +332,7 @@ async def add_partial_payment(
     paiement_id: int,
     montant: float,
     methode_paiement: str = "especes",
+    date_paiement: Optional[date] = None,
     notes: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -368,11 +369,22 @@ async def add_partial_payment(
     paiement.montant_paye = new_total
     paiement.methode_paiement = methode_paiement
 
+    # Set or update payment date
+    payment_date = date_paiement if date_paiement else date.today()
+
+    # Always set date_paiement for the last payment
+    # If there was a previous partial payment, this will be the date of the latest payment
+    paiement.date_paiement = payment_date
+
     # Update notes
     if notes:
         existing_notes = paiement.notes or ""
-        timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
-        paiement.notes = f"{existing_notes}\n[{timestamp}] Paiement partiel de {montant}€ - {notes}".strip()
+        date_str = payment_date.strftime("%d/%m/%Y")
+        paiement.notes = f"{existing_notes}\n[{date_str}] Paiement partiel de {montant}€ via {methode_paiement} - {notes}".strip()
+    else:
+        existing_notes = paiement.notes or ""
+        date_str = payment_date.strftime("%d/%m/%Y")
+        paiement.notes = f"{existing_notes}\n[{date_str}] Paiement partiel de {montant}€ via {methode_paiement}".strip()
 
     # Recalculate status
     paiement.statut = calculate_statut(
@@ -380,10 +392,6 @@ async def add_partial_payment(
         paiement.montant_paye,
         paiement.date_echeance
     )
-
-    # If fully paid now, set payment date
-    if paiement.montant_paye >= paiement.montant_du:
-        paiement.date_paiement = date.today()
 
     db.commit()
     db.refresh(paiement)

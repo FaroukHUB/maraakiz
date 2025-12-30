@@ -25,6 +25,7 @@ const PaiementsV2 = () => {
   const [selectedPaiement, setSelectedPaiement] = useState(null);
   const [partialAmount, setPartialAmount] = useState('');
   const [partialMethode, setPartialMethode] = useState('especes');
+  const [partialDatePaiement, setPartialDatePaiement] = useState('');
   const [partialNotes, setPartialNotes] = useState('');
   const [selectedStatut, setSelectedStatut] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,7 +37,6 @@ const PaiementsV2 = () => {
     montant_du: '',
     montant_paye: 0,
     date_echeance: '',
-    date_paiement: '',
     methode_paiement: '',
     notes: ''
   });
@@ -188,8 +188,7 @@ const PaiementsV2 = () => {
         mois: parseInt(formData.mois),
         annee: parseInt(formData.annee),
         montant_du: parseFloat(formData.montant_du),
-        montant_paye: parseFloat(formData.montant_paye) || 0,
-        date_paiement: formData.date_paiement || null
+        montant_paye: parseFloat(formData.montant_paye) || 0
       };
 
       console.log('[DEBUG] Sending payment:', payload);
@@ -212,7 +211,6 @@ const PaiementsV2 = () => {
         montant_du: '',
         montant_paye: 0,
         date_echeance: '',
-        date_paiement: '',
         methode_paiement: '',
         notes: ''
       });
@@ -281,6 +279,7 @@ const PaiementsV2 = () => {
           params: {
             montant: parseFloat(partialAmount),
             methode_paiement: partialMethode,
+            date_paiement: partialDatePaiement || null,
             notes: partialNotes
           },
           headers: { Authorization: `Bearer ${token}` }
@@ -292,6 +291,7 @@ const PaiementsV2 = () => {
       setSelectedPaiement(null);
       setPartialAmount('');
       setPartialMethode('especes');
+      setPartialDatePaiement('');
       setPartialNotes('');
       fetchData();
     } catch (err) {
@@ -699,28 +699,15 @@ const PaiementsV2 = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Date d'échéance *</label>
-                    <input
-                      type="date"
-                      value={formData.date_echeance}
-                      onChange={(e) => setFormData({ ...formData, date_echeance: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Date de paiement</label>
-                    <input
-                      type="date"
-                      value={formData.date_paiement}
-                      onChange={(e) => setFormData({ ...formData, date_paiement: e.target.value })}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Si déjà payé</p>
-                  </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Date d'échéance *</label>
+                  <input
+                    type="date"
+                    value={formData.date_echeance}
+                    onChange={(e) => setFormData({ ...formData, date_echeance: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
+                  />
                 </div>
 
                 <div>
@@ -1012,6 +999,17 @@ const PaiementsV2 = () => {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Date de paiement *</label>
+                  <input
+                    type="date"
+                    value={partialDatePaiement}
+                    onChange={(e) => setPartialDatePaiement(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Notes (optionnel)</label>
                   <textarea
                     value={partialNotes}
@@ -1029,6 +1027,8 @@ const PaiementsV2 = () => {
                       setShowPartialPaymentModal(false);
                       setSelectedPaiement(null);
                       setPartialAmount('');
+                      setPartialMethode('especes');
+                      setPartialDatePaiement('');
                       setPartialNotes('');
                     }}
                     className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition-colors"
