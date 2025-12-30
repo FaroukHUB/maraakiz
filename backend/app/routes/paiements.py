@@ -31,6 +31,7 @@ class PaiementCreate(BaseModel):
     montant_du: float
     montant_paye: float = 0.0
     date_echeance: date
+    date_paiement: Optional[date] = None
     methode_paiement: Optional[str] = None
     notes: Optional[str] = None
 
@@ -248,6 +249,11 @@ async def create_paiement(
 
     print(f"[DEBUG] Creating payment with status: {statut}")
 
+    # Set date_paiement: use provided value, or auto-set if fully paid
+    date_paiement_final = paiement_data.date_paiement
+    if date_paiement_final is None and paiement_data.montant_paye >= paiement_data.montant_du:
+        date_paiement_final = date.today()
+
     new_paiement = Paiement(
         eleve_id=paiement_data.eleve_id,
         merkez_id=current_user.merkez_id,
@@ -259,7 +265,7 @@ async def create_paiement(
         date_echeance=paiement_data.date_echeance,
         methode_paiement=paiement_data.methode_paiement,
         notes=paiement_data.notes,
-        date_paiement=date.today() if paiement_data.montant_paye >= paiement_data.montant_du else None
+        date_paiement=date_paiement_final
     )
 
     db.add(new_paiement)

@@ -34,6 +34,7 @@ const PaiementsV2 = () => {
     montant_du: '',
     montant_paye: 0,
     date_echeance: '',
+    date_paiement: '',
     methode_paiement: '',
     notes: ''
   });
@@ -170,7 +171,8 @@ const PaiementsV2 = () => {
         mois: parseInt(formData.mois),
         annee: parseInt(formData.annee),
         montant_du: parseFloat(formData.montant_du),
-        montant_paye: parseFloat(formData.montant_paye) || 0
+        montant_paye: parseFloat(formData.montant_paye) || 0,
+        date_paiement: formData.date_paiement || null
       };
 
       console.log('[DEBUG] Sending payment:', payload);
@@ -193,6 +195,7 @@ const PaiementsV2 = () => {
         montant_du: '',
         montant_paye: 0,
         date_echeance: '',
+        date_paiement: '',
         methode_paiement: '',
         notes: ''
       });
@@ -679,15 +682,44 @@ const PaiementsV2 = () => {
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Date d'échéance *</label>
+                    <input
+                      type="date"
+                      value={formData.date_echeance}
+                      onChange={(e) => setFormData({ ...formData, date_echeance: e.target.value })}
+                      required
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Date de paiement</label>
+                    <input
+                      type="date"
+                      value={formData.date_paiement}
+                      onChange={(e) => setFormData({ ...formData, date_paiement: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Si déjà payé</p>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Date d'échéance *</label>
-                  <input
-                    type="date"
-                    value={formData.date_echeance}
-                    onChange={(e) => setFormData({ ...formData, date_echeance: e.target.value })}
-                    required
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Méthode de paiement</label>
+                  <select
+                    value={formData.methode_paiement}
+                    onChange={(e) => setFormData({ ...formData, methode_paiement: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#437C8B] focus:border-transparent"
-                  />
+                  >
+                    <option value="">Sélectionner...</option>
+                    <option value="especes">💵 Espèces</option>
+                    <option value="virement">🏦 Virement</option>
+                    <option value="cheque">📝 Chèque</option>
+                    <option value="carte">💳 Carte bancaire</option>
+                    <option value="paypal">💙 PayPal</option>
+                  </select>
                 </div>
 
                 <div>
@@ -845,6 +877,7 @@ const PaiementsV2 = () => {
                     <option value="virement">🏦 Virement</option>
                     <option value="cheque">📝 Chèque</option>
                     <option value="carte">💳 Carte bancaire</option>
+                    <option value="paypal">💙 PayPal</option>
                   </select>
                 </div>
 
