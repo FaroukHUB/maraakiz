@@ -4,6 +4,7 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendrier.css';
+import { CheckCircle } from 'lucide-react';
 
 // Import explicite de la locale française
 import 'moment/dist/locale/fr';
@@ -637,9 +638,70 @@ const Calendrier = () => {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{selectedEvent ? 'Modifier le cours' : 'Nouveau cours'}</h2>
+              <div>
+                <h2>{selectedEvent ? 'Gérer le cours' : 'Nouveau cours'}</h2>
+                {selectedEvent && (
+                  <div className="flex items-center space-x-2 mt-2">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                      formData.statut === 'termine'
+                        ? 'bg-green-100 text-green-700'
+                        : formData.statut === 'reporte'
+                        ? 'bg-orange-100 text-orange-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {formData.statut === 'termine' ? '✅ Terminé' : formData.statut === 'reporte' ? '⏸️ Reporté' : '📅 À venir'}
+                    </span>
+                    <span className="text-sm text-gray-600">
+                      {moment(selectedEvent.date_debut).format('dddd D MMMM YYYY à HH:mm')}
+                    </span>
+                  </div>
+                )}
+              </div>
               <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
             </div>
+
+            {/* Quick Actions Section for planned courses */}
+            {selectedEvent && formData.statut === 'planifie' && (
+              <div className="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b-2 border-green-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-green-900 mb-1">
+                      ⏰ Ce cours est planifié
+                    </h3>
+                    <p className="text-sm text-green-700">
+                      Une fois le cours donné, marquez-le comme terminé pour créer le rapport
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="ml-4 inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    onClick={() => {
+                      setShowModal(false);
+                      setShowRapportModal(true);
+                    }}
+                  >
+                    <CheckCircle size={20} className="mr-2" />
+                    Marquer comme terminé
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Info Section for completed courses */}
+            {selectedEvent && formData.statut === 'termine' && (
+              <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-blue-900 mb-1">
+                      ✅ Ce cours est terminé
+                    </h3>
+                    <p className="text-sm text-blue-700">
+                      Le rapport de cours a été créé. Vous pouvez le consulter ou le modifier ci-dessous.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="cours-form">
               {/* Sélection élève(s) - Dropdown moderne */}
@@ -909,23 +971,11 @@ const Calendrier = () => {
                   </button>
                 )}
                 <div className="modal-actions-right">
-                  {selectedEvent && formData.statut !== 'termine' && (
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      style={{backgroundColor: '#10b981', marginRight: '10px'}}
-                      onClick={() => {
-                        setShowRapportModal(true);
-                      }}
-                    >
-                      ✅ Marquer comme terminé
-                    </button>
-                  )}
                   <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
                     Annuler
                   </button>
                   <button type="submit" className="btn-primary">
-                    {selectedEvent ? 'Modifier' : 'Créer'}
+                    {selectedEvent ? 'Enregistrer les modifications' : 'Créer le cours'}
                   </button>
                 </div>
               </div>

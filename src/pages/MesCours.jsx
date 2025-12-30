@@ -3,7 +3,7 @@ import axios from 'axios';
 import moment from 'moment';
 import 'moment/dist/locale/fr';
 import DashboardLayout from '../layouts/DashboardLayout';
-import { Search, FileText, Archive, Trash2, Filter, Clock, Users } from 'lucide-react';
+import { Search, FileText, Archive, Trash2, Filter, Clock, Users, CheckCircle, Eye, Edit3, Calendar, BookOpen, TrendingUp } from 'lucide-react';
 
 moment.locale('fr');
 
@@ -12,6 +12,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const MesCours = () => {
   const [activeTab, setActiveTab] = useState('a_venir');
   const [cours, setCours] = useState([]);
+  const [coursAVenir, setCoursAVenir] = useState([]);
+  const [coursTermines, setCoursTermines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMatiere, setFilterMatiere] = useState('all');
@@ -32,7 +34,12 @@ const MesCours = () => {
 
   useEffect(() => {
     fetchCours();
-  }, [activeTab]);
+  }, []);
+
+  useEffect(() => {
+    // Update displayed courses when tab changes
+    setCours(activeTab === 'a_venir' ? coursAVenir : coursTermines);
+  }, [activeTab, coursAVenir, coursTermines]);
 
   const fetchCours = async () => {
     try {
@@ -40,12 +47,21 @@ const MesCours = () => {
       const token = localStorage.getItem('token');
       const statut = activeTab === 'a_venir' ? 'planifie' : 'termine';
 
-      const response = await axios.get(`${API_URL}/api/calendrier/cours`, {
-        params: { statut },
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Fetch both for stats
+      const [aVenirRes, terminesRes] = await Promise.all([
+        axios.get(`${API_URL}/api/calendrier/cours`, {
+          params: { statut: 'planifie' },
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_URL}/api/calendrier/cours`, {
+          params: { statut: 'termine' },
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
 
-      setCours(response.data);
+      setCoursAVenir(aVenirRes.data);
+      setCoursTermines(terminesRes.data);
+      setCours(activeTab === 'a_venir' ? aVenirRes.data : terminesRes.data);
     } catch (error) {
       console.error('Erreur lors du chargement des cours:', error);
     } finally {
@@ -254,6 +270,69 @@ const MesCours = () => {
           <p className="text-gray-600">Gérez vos cours planifiés et terminés</p>
         </div>
 
+        {/* Stats Cards */}
+        {!loading && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Upcoming Courses */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-blue-600 uppercase tracking-wide">
+                    À venir
+                  </p>
+                  <p className="text-4xl font-bold text-blue-900 mt-2">{coursAVenir.length}</p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    {coursAVenir.length === 0 ? 'Aucun cours' : coursAVenir.length === 1 ? 'cours planifié' : 'cours planifiés'}
+                  </p>
+                </div>
+                <div className="p-4 bg-blue-200 rounded-full">
+                  <Calendar className="text-blue-700" size={28} />
+                </div>
+              </div>
+            </div>
+
+            {/* Completed Courses */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-green-600 uppercase tracking-wide">
+                    Terminés
+                  </p>
+                  <p className="text-4xl font-bold text-green-900 mt-2">{coursTermines.length}</p>
+                  <p className="text-xs text-green-700 mt-1">
+                    {coursTermines.length === 0 ? 'Aucun cours' : coursTermines.length === 1 ? 'cours terminé' : 'cours terminés'}
+                  </p>
+                </div>
+                <div className="p-4 bg-green-200 rounded-full">
+                  <CheckCircle className="text-green-700" size={28} />
+                </div>
+              </div>
+            </div>
+
+            {/* Total & Completion Rate */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-purple-600 uppercase tracking-wide">
+                    Total
+                  </p>
+                  <p className="text-4xl font-bold text-purple-900 mt-2">
+                    {coursAVenir.length + coursTermines.length}
+                  </p>
+                  <p className="text-xs text-purple-700 mt-1">
+                    {coursTermines.length > 0
+                      ? `${Math.round((coursTermines.length / (coursAVenir.length + coursTermines.length)) * 100)}% complétés`
+                      : 'Commencez vos cours'}
+                  </p>
+                </div>
+                <div className="p-4 bg-purple-200 rounded-full">
+                  <BookOpen className="text-purple-700" size={28} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex items-center space-x-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
           <button
@@ -424,41 +503,41 @@ const MesCours = () => {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center justify-end space-x-2">
                           {activeTab === 'a_venir' ? (
                             <button
                               onClick={() => handleOpenRapport(coursItem)}
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                              title="Marquer comme terminé"
+                              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-green-700 shadow-sm hover:shadow-md transition-all transform hover:scale-105"
                             >
-                              <FileText size={18} />
+                              <CheckCircle size={18} className="mr-2" />
+                              Marquer comme terminé
                             </button>
                           ) : (
-                            <>
+                            <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => handleOpenRapport(coursItem)}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="Voir/Modifier le rapport"
+                                className="inline-flex items-center px-3 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 border border-blue-200 transition-all"
                               >
-                                <FileText size={18} />
+                                <Eye size={16} className="mr-1.5" />
+                                Voir rapport
                               </button>
                               <button
                                 onClick={() => handleArchiveCours(coursItem.id)}
-                                className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                                title="Archiver"
+                                className="inline-flex items-center px-3 py-2 bg-orange-50 text-orange-700 font-medium rounded-lg hover:bg-orange-100 border border-orange-200 transition-all"
                               >
-                                <Archive size={18} />
+                                <Archive size={16} className="mr-1.5" />
+                                Archiver
                               </button>
-                            </>
+                              <button
+                                onClick={() => handleDeleteCours(coursItem.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Supprimer"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
                           )}
-                          <button
-                            onClick={() => handleDeleteCours(coursItem.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Supprimer"
-                          >
-                            <Trash2 size={18} />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -480,7 +559,16 @@ const MesCours = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
-                <h2 className="text-2xl font-bold text-gray-900">📝 Rapport de Cours</h2>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {activeTab === 'a_venir' ? '✅ Marquer comme terminé' : '📝 Rapport de Cours'}
+                  </h2>
+                  {activeTab === 'a_venir' && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Complétez le rapport pour marquer ce cours comme terminé
+                    </p>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowRapportModal(false)}
                   className="text-gray-400 hover:text-gray-600 text-3xl font-bold leading-none"
@@ -662,9 +750,13 @@ const MesCours = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[#437C8B] to-[#5a99ab] text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                    className={`flex-1 px-6 py-3 text-white rounded-lg font-semibold hover:shadow-lg transition-all ${
+                      activeTab === 'a_venir'
+                        ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                        : 'bg-gradient-to-r from-[#437C8B] to-[#5a99ab]'
+                    }`}
                   >
-                    Enregistrer le rapport
+                    {activeTab === 'a_venir' ? '✅ Valider et marquer terminé' : '💾 Enregistrer les modifications'}
                   </button>
                 </div>
               </form>
