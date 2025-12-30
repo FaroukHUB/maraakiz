@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.database import engine, Base
-from app.routes import public, auth, eleves, merkez, messages, paiements, notes_cours, calendrier, profile, bibliotheque
+from app.routes import public, auth, eleves, merkez, messages, paiements, notes_cours, calendrier, profile, bibliotheque, professeurs
 from pathlib import Path
 
 # Import all models to ensure tables are created
@@ -36,6 +36,7 @@ app.include_router(public.router, prefix="/api/public", tags=["Public"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(profile.router, prefix="/api/profile", tags=["Profile"])
 app.include_router(eleves.router, prefix="/api/eleves", tags=["Eleves"])
+app.include_router(professeurs.router, prefix="/api/professeurs", tags=["Professeurs"])
 app.include_router(merkez.router, prefix="/api/merkez", tags=["Merkez"])
 app.include_router(calendrier.router, prefix="/api/calendrier", tags=["Calendrier"])
 app.include_router(messages.router, prefix="/api/messages", tags=["Messages"])
