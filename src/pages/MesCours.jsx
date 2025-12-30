@@ -99,6 +99,15 @@ const MesCours = () => {
     try {
       const token = localStorage.getItem('token');
 
+      // First, mark course as terminated (only if it's not already)
+      if (activeTab === 'a_venir') {
+        await axios.put(
+          `${API_URL}/api/calendrier/cours/${selectedCours.id}`,
+          { statut: 'termine' },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
       // Try to create or update notes
       let notesId;
       try {
@@ -147,7 +156,11 @@ const MesCours = () => {
         );
       }
 
-      alert('✅ Rapport enregistré avec succès!');
+      const message = activeTab === 'a_venir'
+        ? '✅ Cours marqué comme terminé et rapport enregistré avec succès!'
+        : '✅ Rapport mis à jour avec succès!';
+
+      alert(message);
       setShowRapportModal(false);
       setRapportData({
         resume: '',
@@ -162,6 +175,7 @@ const MesCours = () => {
       setUploadedFiles([]);
       setExistingFiles([]);
       setSelectedCours(null);
+      fetchCours(); // Refresh to move course to correct tab
     } catch (error) {
       console.error('Erreur lors de l\'enregistrement du rapport:', error);
       alert('Erreur lors de l\'enregistrement du rapport');
@@ -315,6 +329,16 @@ const MesCours = () => {
 
                     {/* Right: Actions */}
                     <div className="flex items-center space-x-2 ml-4">
+                      {activeTab === 'a_venir' && (
+                        <button
+                          onClick={() => handleOpenRapport(coursItem)}
+                          className="flex items-center space-x-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-800 rounded-xl transition-colors font-medium"
+                          title="Marquer comme terminé"
+                        >
+                          <FileText size={18} />
+                          <span>✅ Terminé</span>
+                        </button>
+                      )}
                       {activeTab === 'termines' && (
                         <>
                           <button
