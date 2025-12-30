@@ -38,7 +38,7 @@ const DashboardLayout = ({ children }) => {
   // Navigation items based on user type
   const navigationItems = user?.type === "eleve" ? [
     { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
-    { name: "Mes cours", path: "/dashboard/mes-cours", icon: BookOpen },
+    { name: "Mes rapports", path: "/dashboard/mes-rapports", icon: BookOpen },
     { name: "Mes professeurs", path: "/dashboard/mes-professeurs", icon: Users },
     { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
     { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },

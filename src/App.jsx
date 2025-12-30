@@ -28,6 +28,7 @@ import PaiementsV2 from "./pages/PaiementsV2.jsx";
 import Paiements from "./pages/Paiements.jsx";
 import PaiementPublic from "./pages/PaiementPublic.jsx";
 import MesCours from "./pages/MesCours.jsx";
+import MesRapportsCours from "./pages/MesRapportsCours.jsx";
 
 import CRMLayout from "./layouts/CRMLayout";
 
@@ -53,6 +54,7 @@ function App() {
         <Route path="/dashboard/calendrier" element={<CalendrierApple />} />
         <Route path="/dashboard/calendrier-old" element={<DashboardCalendrier />} />
         <Route path="/dashboard/mes-cours" element={<MesCours />} />
+        <Route path="/dashboard/mes-rapports" element={<MesRapportsCours />} />
         <Route path="/dashboard/paiements" element={<PaiementsV2 />} />
         <Route path="/dashboard/bibliotheque" element={<DashboardBibliotheque />} />
         <Route path="/dashboard/messages" element={<DashboardMessages />} />
