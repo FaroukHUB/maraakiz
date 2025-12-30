@@ -19,6 +19,8 @@ const PaiementsV2 = () => {
   const [archivedMonths, setArchivedMonths] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showArchivesModal, setShowArchivesModal] = useState(false);
+  const [selectedArchiveMonth, setSelectedArchiveMonth] = useState(null);
+  const [archiveDetails, setArchiveDetails] = useState([]);
   const [showPartialPaymentModal, setShowPartialPaymentModal] = useState(false);
   const [selectedPaiement, setSelectedPaiement] = useState(null);
   const [partialAmount, setPartialAmount] = useState('');
@@ -87,6 +89,21 @@ const PaiementsV2 = () => {
       setArchivedMonths(response.data);
     } catch (err) {
       console.error('Erreur:', err);
+    }
+  };
+
+  const fetchArchiveDetails = async (mois, annee) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/paiements/`, {
+        params: { mois, annee, include_archived: true },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setArchiveDetails(response.data);
+      setSelectedArchiveMonth({ mois, annee });
+    } catch (err) {
+      console.error('Erreur:', err);
+      alert('Erreur lors du chargement des détails');
     }
   };
 
@@ -755,59 +772,172 @@ const PaiementsV2 = () => {
 
         {/* Modal Archives */}
         {showArchivesModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowArchivesModal(false)}>
-            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="p-6 border-b-2 border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-900">📦 Mois Archivés</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => {
+            setShowArchivesModal(false);
+            setSelectedArchiveMonth(null);
+            setArchiveDetails([]);
+          }}>
+            <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="p-6 border-b-2 border-gray-100 flex items-center justify-between">
+                {selectedArchiveMonth ? (
+                  <>
+                    <div>
+                      <button
+                        onClick={() => {
+                          setSelectedArchiveMonth(null);
+                          setArchiveDetails([]);
+                        }}
+                        className="text-sm text-[#437C8B] hover:underline mb-2 flex items-center"
+                      >
+                        ← Retour aux archives
+                      </button>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        📦 {getMoisNom(selectedArchiveMonth.mois)} {selectedArchiveMonth.annee}
+                      </h2>
+                    </div>
+                  </>
+                ) : (
+                  <h2 className="text-2xl font-bold text-gray-900">📦 Mois Archivés</h2>
+                )}
               </div>
 
               <div className="p-6">
-                {archivedMonths.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Archive size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600">Aucun mois archivé</p>
-                  </div>
+                {!selectedArchiveMonth ? (
+                  // Liste des mois archivés
+                  archivedMonths.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Archive size={48} className="mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-600">Aucun mois archivé</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {archivedMonths.map(month => (
+                        <div key={`${month.mois}-${month.annee}`} className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200 hover:border-[#437C8B] transition-colors cursor-pointer" onClick={() => fetchArchiveDetails(month.mois, month.annee)}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                {getMoisNom(month.mois)} {month.annee}
+                              </h3>
+                              <div className="grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                  <span className="text-gray-600">Paiements: </span>
+                                  <span className="font-semibold">{month.count}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-600">Total dû: </span>
+                                  <span className="font-semibold">{month.total_du?.toFixed(2)} €</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-600">Encaissé: </span>
+                                  <span className="font-semibold text-green-600">{month.total_paye?.toFixed(2)} €</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUnarchiveMonth(month.mois, month.annee);
+                                }}
+                                className="flex items-center space-x-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-xl transition-colors font-medium"
+                              >
+                                <ArchiveRestore size={20} />
+                                <span>Désarchiver</span>
+                              </button>
+                              <ChevronRight size={24} className="text-gray-400" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
                 ) : (
+                  // Détails du mois archivé
                   <div className="space-y-4">
-                    {archivedMonths.map(month => (
-                      <div key={`${month.mois}-${month.annee}`} className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">
-                              {getMoisNom(month.mois)} {month.annee}
-                            </h3>
-                            <div className="grid grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <span className="text-gray-600">Paiements: </span>
-                                <span className="font-semibold">{month.count}</span>
+                    {archiveDetails.length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-gray-600">Aucun détail disponible</p>
+                      </div>
+                    ) : (
+                      archiveDetails.map(paiement => (
+                        <div key={paiement.id} className="bg-white border-2 border-gray-200 rounded-xl p-6">
+                          {/* En-tête élève */}
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#437C8B] to-[#5a99ab] flex items-center justify-center text-white font-semibold text-lg">
+                                {paiement.eleve_prenom?.[0]}{paiement.eleve_nom?.[0]}
                               </div>
                               <div>
-                                <span className="text-gray-600">Total: </span>
-                                <span className="font-semibold">{month.total_du?.toFixed(2)} €</span>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Encaissé: </span>
-                                <span className="font-semibold text-green-600">{month.total_paye?.toFixed(2)} €</span>
+                                <h3 className="text-lg font-bold text-gray-900">
+                                  {paiement.eleve_prenom} {paiement.eleve_nom}
+                                </h3>
+                                <span className={`px-3 py-1 rounded-lg text-xs font-semibold border ${getStatusColor(paiement.statut)}`}>
+                                  {getStatusLabel(paiement.statut)}
+                                </span>
                               </div>
                             </div>
                           </div>
-                          <button
-                            onClick={() => handleUnarchiveMonth(month.mois, month.annee)}
-                            className="flex items-center space-x-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-xl transition-colors font-medium"
-                          >
-                            <ArchiveRestore size={20} />
-                            <span>Désarchiver</span>
-                          </button>
+
+                          {/* Informations financières */}
+                          <div className="grid grid-cols-3 gap-4 mb-4">
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <p className="text-xs text-gray-600 mb-1">Montant dû</p>
+                              <p className="text-xl font-bold text-gray-900">{paiement.montant_du?.toFixed(2)} €</p>
+                            </div>
+                            <div className="bg-green-50 p-4 rounded-lg">
+                              <p className="text-xs text-gray-600 mb-1">Montant payé</p>
+                              <p className="text-xl font-bold text-green-600">{paiement.montant_paye?.toFixed(2)} €</p>
+                            </div>
+                            <div className="bg-yellow-50 p-4 rounded-lg">
+                              <p className="text-xs text-gray-600 mb-1">Restant</p>
+                              <p className="text-xl font-bold text-yellow-600">
+                                {(paiement.montant_du - paiement.montant_paye)?.toFixed(2)} €
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Détails paiement */}
+                          <div className="grid grid-cols-2 gap-4 text-sm border-t pt-4">
+                            <div>
+                              <span className="text-gray-600">Date d'échéance: </span>
+                              <span className="font-semibold">{moment(paiement.date_echeance).format('DD/MM/YYYY')}</span>
+                            </div>
+                            {paiement.date_paiement && (
+                              <div>
+                                <span className="text-gray-600">Date de paiement: </span>
+                                <span className="font-semibold text-green-600">{moment(paiement.date_paiement).format('DD/MM/YYYY')}</span>
+                              </div>
+                            )}
+                            {paiement.methode_paiement && (
+                              <div>
+                                <span className="text-gray-600">Méthode: </span>
+                                <span className="font-semibold capitalize">{paiement.methode_paiement}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Notes / Historique */}
+                          {paiement.notes && (
+                            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                              <p className="text-xs font-semibold text-gray-700 mb-2">📝 Historique / Notes:</p>
+                              <p className="text-sm text-gray-700 whitespace-pre-line">{paiement.notes}</p>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 )}
               </div>
 
               <div className="p-6 border-t-2 border-gray-100">
                 <button
-                  onClick={() => setShowArchivesModal(false)}
+                  onClick={() => {
+                    setShowArchivesModal(false);
+                    setSelectedArchiveMonth(null);
+                    setArchiveDetails([]);
+                  }}
                   className="w-full px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition-colors"
                 >
                   Fermer
