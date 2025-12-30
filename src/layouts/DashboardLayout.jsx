@@ -54,20 +54,43 @@ const DashboardLayout = ({ children }) => {
         { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
         { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
       ];
-    } else {
-      // Professeur
-      return [
-        { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
-        { name: "Mes élèves", path: "/dashboard/eleves", icon: Users },
-        { name: "Calendrier", path: "/dashboard/calendrier", icon: Calendar },
-        { name: "Mes cours", path: "/dashboard/mes-cours", icon: BookOpen },
-        { name: "Bibliothèque", path: "/dashboard/bibliotheque", icon: Library },
-        { name: "Paiements", path: "/dashboard/paiements", icon: CreditCard },
-        { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
-        { name: "Mon profil", path: "/dashboard/profil", icon: User },
-        { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
-      ];
+    } else if (user?.type === "professeur") {
+      // Différencier prof salarié vs indépendant
+      const isSalarie = user?.institut_id != null;
+
+      if (isSalarie) {
+        // Professeur salarié - SANS Paiements
+        return [
+          { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
+          { name: "Mes élèves", path: "/dashboard/eleves", icon: Users },
+          { name: "Calendrier", path: "/dashboard/calendrier", icon: Calendar },
+          { name: "Mes cours", path: "/dashboard/mes-cours", icon: BookOpen },
+          { name: "Bibliothèque", path: "/dashboard/bibliotheque", icon: Library },
+          { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
+          { name: "Mon profil", path: "/dashboard/profil", icon: User },
+          { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
+        ];
+      } else {
+        // Professeur indépendant - AVEC Paiements
+        return [
+          { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
+          { name: "Mes élèves", path: "/dashboard/eleves", icon: Users },
+          { name: "Calendrier", path: "/dashboard/calendrier", icon: Calendar },
+          { name: "Mes cours", path: "/dashboard/mes-cours", icon: BookOpen },
+          { name: "Bibliothèque", path: "/dashboard/bibliotheque", icon: Library },
+          { name: "Paiements", path: "/dashboard/paiements", icon: CreditCard },
+          { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
+          { name: "Mon profil", path: "/dashboard/profil", icon: User },
+          { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
+        ];
+      }
     }
+
+    // Fallback par défaut
+    return [
+      { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
+      { name: "Paramètres", path: "/dashboard/parametres", icon: Settings },
+    ];
   };
 
   const navigationItems = getNavigationItems();
