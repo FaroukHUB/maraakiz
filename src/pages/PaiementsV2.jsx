@@ -168,9 +168,13 @@ const PaiementsV2 = () => {
         montant_paye: parseFloat(formData.montant_paye) || 0
       };
 
-      await axios.post(`${API_BASE_URL}/api/paiements/`, payload, {
+      console.log('[DEBUG] Sending payment:', payload);
+
+      const response = await axios.post(`${API_BASE_URL}/api/paiements/`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      console.log('[DEBUG] Payment created:', response.data);
 
       alert('✅ Paiement créé avec succès!');
       setShowAddModal(false);
@@ -184,7 +188,10 @@ const PaiementsV2 = () => {
         methode_paiement: '',
         notes: ''
       });
-      fetchData();
+
+      console.log('[DEBUG] Fetching data after payment creation...');
+      await fetchData();
+      console.log('[DEBUG] Data fetched, paiements count:', paiements.length);
     } catch (err) {
       console.error('Erreur complète:', err.response?.data);
       alert(err.response?.data?.detail || 'Erreur lors de l\'ajout du paiement');

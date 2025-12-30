@@ -204,6 +204,8 @@ async def create_paiement(
     """
     Create a new payment record
     """
+    print(f"[DEBUG] Creating payment for eleve_id={paiement_data.eleve_id}, mois={paiement_data.mois}, annee={paiement_data.annee}")
+
     if not current_user.merkez_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -217,6 +219,7 @@ async def create_paiement(
     ).first()
 
     if not eleve:
+        print(f"[DEBUG] Student {paiement_data.eleve_id} not found for merkez {current_user.merkez_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Élève non trouvé"
@@ -230,6 +233,7 @@ async def create_paiement(
     ).first()
 
     if existing:
+        print(f"[DEBUG] Payment already exists: id={existing.id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Un paiement existe déjà pour ce mois"
@@ -241,6 +245,8 @@ async def create_paiement(
         paiement_data.montant_paye,
         paiement_data.date_echeance
     )
+
+    print(f"[DEBUG] Creating payment with status: {statut}")
 
     new_paiement = Paiement(
         eleve_id=paiement_data.eleve_id,
@@ -259,6 +265,8 @@ async def create_paiement(
     db.add(new_paiement)
     db.commit()
     db.refresh(new_paiement)
+
+    print(f"[DEBUG] Payment created successfully: id={new_paiement.id}, archived={new_paiement.archived}")
 
     return new_paiement
 
