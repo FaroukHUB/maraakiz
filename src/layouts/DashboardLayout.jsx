@@ -11,7 +11,8 @@ import {
   X,
   User,
   BookOpen,
-  CreditCard
+  CreditCard,
+  Library
 } from "lucide-react";
 
 const DashboardLayout = ({ children }) => {
@@ -45,6 +46,7 @@ const DashboardLayout = ({ children }) => {
     { name: "Tableau de bord", path: "/dashboard", icon: LayoutDashboard },
     { name: "Mes élèves", path: "/dashboard/eleves", icon: Users },
     { name: "Calendrier", path: "/dashboard/calendrier", icon: Calendar },
+    { name: "Bibliothèque", path: "/dashboard/bibliotheque", icon: Library },
     { name: "Paiements", path: "/dashboard/paiements", icon: CreditCard },
     { name: "Messages", path: "/dashboard/messages", icon: MessageSquare },
     { name: "Mon profil", path: "/dashboard/profil", icon: User },

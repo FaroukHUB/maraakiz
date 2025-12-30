@@ -15,6 +15,7 @@ import DashboardProfilComplet from "./pages/DashboardProfilComplet";
 import DashboardCalendrier from "./pages/DashboardCalendrier";
 import CalendrierApple from "./pages/CalendrierApple";
 import DashboardMessages from "./pages/DashboardMessages";
+import DashboardBibliotheque from "./pages/DashboardBibliotheque";
 import Tarifs from "./pages/Tarifs";
 import Contact from "./pages/Contact";
 import Inscription from "./pages/Inscription";
@@ -51,6 +52,7 @@ function App() {
         <Route path="/dashboard/calendrier" element={<CalendrierApple />} />
         <Route path="/dashboard/calendrier-old" element={<DashboardCalendrier />} />
         <Route path="/dashboard/paiements" element={<PaiementsV2 />} />
+        <Route path="/dashboard/bibliotheque" element={<DashboardBibliotheque />} />
         <Route path="/dashboard/messages" element={<DashboardMessages />} />
         <Route path="/dashboard/messages/:userId" element={<DashboardMessages />} />
 
