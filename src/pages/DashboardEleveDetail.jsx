@@ -4,7 +4,7 @@ import axios from 'axios';
 import moment from 'moment';
 import 'moment/dist/locale/fr';
 import DashboardLayout from '../layouts/DashboardLayout';
-import { ArrowLeft, Calendar, CreditCard, FileText, User } from 'lucide-react';
+import { ArrowLeft, Calendar, CreditCard, FileText, User, DollarSign, TrendingUp, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 import './DashboardEleveDetail.css';
 
 moment.locale('fr');
@@ -293,42 +293,216 @@ const DashboardEleveDetail = () => {
                   <p>Aucun paiement enregistré pour cet élève</p>
                 </div>
               ) : (
-                <div className="paiements-list">
-                  {paiements.map(p => (
-                    <div key={p.id} className="paiement-card">
-                      <div className="paiement-header">
-                        <span className="paiement-month">
-                          {moment().month(p.mois - 1).format('MMMM')} {p.annee}
-                        </span>
-                        <span className={`paiement-statut ${p.statut}`}>
-                          {p.statut === 'paye' && '✅ Payé'}
-                          {p.statut === 'impaye' && '⏳ Impayé'}
-                          {p.statut === 'partiel' && '⚠️ Partiel'}
-                          {p.statut === 'en_retard' && '🔴 En retard'}
-                        </span>
+                <>
+                  {/* Stats Cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                    {/* Total Dû */}
+                    <div style={{
+                      background: 'linear-gradient(to bottom right, rgb(239 246 255), rgb(219 234 254))',
+                      borderRadius: '0.75rem',
+                      padding: '1.5rem',
+                      border: '2px solid rgb(191 219 254)',
+                      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                      transition: 'box-shadow 0.3s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgb(37 99 235)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Total Dû
+                          </p>
+                          <p style={{ fontSize: '2.25rem', fontWeight: 700, color: 'rgb(30 58 138)', marginTop: '0.5rem' }}>
+                            {paiements.reduce((sum, p) => sum + (p.montant_du || 0), 0).toFixed(2)} €
+                          </p>
+                          <p style={{ fontSize: '0.75rem', color: 'rgb(29 78 216)', marginTop: '0.25rem' }}>
+                            {paiements.length} {paiements.length === 1 ? 'paiement' : 'paiements'}
+                          </p>
+                        </div>
+                        <div style={{ padding: '1rem', background: 'rgb(191 219 254)', borderRadius: '9999px' }}>
+                          <DollarSign style={{ color: 'rgb(29 78 216)' }} size={28} />
+                        </div>
                       </div>
-                      <div className="paiement-amounts">
-                        <div className="amount-item">
-                          <span className="amount-label">Montant dû</span>
-                          <span className="amount-value">{p.montant_du?.toFixed(2)} €</span>
-                        </div>
-                        <div className="amount-item">
-                          <span className="amount-label">Payé</span>
-                          <span className="amount-value success">{p.montant_paye?.toFixed(2)} €</span>
-                        </div>
-                        <div className="amount-item">
-                          <span className="amount-label">Restant</span>
-                          <span className="amount-value warning">{(p.montant_du - p.montant_paye)?.toFixed(2)} €</span>
-                        </div>
-                      </div>
-                      {p.date_echeance && (
-                        <div className="paiement-footer">
-                          Échéance: {moment(p.date_echeance).format('DD/MM/YYYY')}
-                        </div>
-                      )}
                     </div>
-                  ))}
-                </div>
+
+                    {/* Total Payé */}
+                    <div style={{
+                      background: 'linear-gradient(to bottom right, rgb(240 253 244), rgb(220 252 231))',
+                      borderRadius: '0.75rem',
+                      padding: '1.5rem',
+                      border: '2px solid rgb(187 247 208)',
+                      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                      transition: 'box-shadow 0.3s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgb(22 163 74)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Total Payé
+                          </p>
+                          <p style={{ fontSize: '2.25rem', fontWeight: 700, color: 'rgb(20 83 45)', marginTop: '0.5rem' }}>
+                            {paiements.reduce((sum, p) => sum + (p.montant_paye || 0), 0).toFixed(2)} €
+                          </p>
+                          <p style={{ fontSize: '0.75rem', color: 'rgb(21 128 61)', marginTop: '0.25rem' }}>
+                            {paiements.filter(p => p.statut === 'paye').length} payé{paiements.filter(p => p.statut === 'paye').length > 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        <div style={{ padding: '1rem', background: 'rgb(187 247 208)', borderRadius: '9999px' }}>
+                          <CheckCircle style={{ color: 'rgb(21 128 61)' }} size={28} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Reste à Payer */}
+                    <div style={{
+                      background: 'linear-gradient(to bottom right, rgb(254 242 242), rgb(254 226 226))',
+                      borderRadius: '0.75rem',
+                      padding: '1.5rem',
+                      border: '2px solid rgb(254 202 202)',
+                      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                      transition: 'box-shadow 0.3s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgb(220 38 38)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Reste à Payer
+                          </p>
+                          <p style={{ fontSize: '2.25rem', fontWeight: 700, color: 'rgb(127 29 29)', marginTop: '0.5rem' }}>
+                            {paiements.reduce((sum, p) => sum + ((p.montant_du || 0) - (p.montant_paye || 0)), 0).toFixed(2)} €
+                          </p>
+                          <p style={{ fontSize: '0.75rem', color: 'rgb(185 28 28)', marginTop: '0.25rem' }}>
+                            {paiements.filter(p => p.statut !== 'paye').length} en attente
+                          </p>
+                        </div>
+                        <div style={{ padding: '1rem', background: 'rgb(254 202 202)', borderRadius: '9999px' }}>
+                          <AlertCircle style={{ color: 'rgb(185 28 28)' }} size={28} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Modern Table */}
+                  <div style={{ background: 'white', borderRadius: '0.75rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', border: '1px solid rgb(229 231 235)', overflow: 'hidden' }}>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%' }}>
+                        <thead>
+                          <tr style={{ background: 'rgb(249 250 251)', borderBottom: '1px solid rgb(229 231 235)' }}>
+                            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: 'rgb(75 85 99)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Période
+                            </th>
+                            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: 'rgb(75 85 99)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Statut
+                            </th>
+                            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: 'rgb(75 85 99)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Montant Dû
+                            </th>
+                            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: 'rgb(75 85 99)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Payé
+                            </th>
+                            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: 'rgb(75 85 99)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Restant
+                            </th>
+                            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: 'rgb(75 85 99)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Échéance
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody style={{ borderTop: '1px solid rgb(243 244 246)' }}>
+                          {paiements.map(p => {
+                            const restant = (p.montant_du || 0) - (p.montant_paye || 0);
+                            return (
+                              <tr key={p.id} style={{ borderBottom: '1px solid rgb(243 244 246)', transition: 'background-color 0.2s' }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(249 250 251)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                              >
+                                {/* Période */}
+                                <td style={{ padding: '1rem 1.5rem', whiteSpace: 'nowrap' }}>
+                                  <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'rgb(17 24 39)' }}>
+                                    {moment().month(p.mois - 1).format('MMMM')} {p.annee}
+                                  </div>
+                                </td>
+
+                                {/* Statut */}
+                                <td style={{ padding: '1rem 1.5rem', whiteSpace: 'nowrap' }}>
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    padding: '0.25rem 0.625rem',
+                                    borderRadius: '9999px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 500,
+                                    border: '1px solid',
+                                    ...(p.statut === 'paye' ? {
+                                      backgroundColor: 'rgb(220 252 231)',
+                                      color: 'rgb(21 128 61)',
+                                      borderColor: 'rgb(187 247 208)'
+                                    } : p.statut === 'partiel' ? {
+                                      backgroundColor: 'rgb(254 249 195)',
+                                      color: 'rgb(161 98 7)',
+                                      borderColor: 'rgb(253 224 71)'
+                                    } : p.statut === 'en_retard' ? {
+                                      backgroundColor: 'rgb(254 226 226)',
+                                      color: 'rgb(185 28 28)',
+                                      borderColor: 'rgb(254 202 202)'
+                                    } : {
+                                      backgroundColor: 'rgb(243 244 246)',
+                                      color: 'rgb(75 85 99)',
+                                      borderColor: 'rgb(209 213 219)'
+                                    })
+                                  }}>
+                                    {p.statut === 'paye' && '✅ Payé'}
+                                    {p.statut === 'impaye' && '⏳ Impayé'}
+                                    {p.statut === 'partiel' && '⚠️ Partiel'}
+                                    {p.statut === 'en_retard' && '🔴 En retard'}
+                                  </span>
+                                </td>
+
+                                {/* Montant Dû */}
+                                <td style={{ padding: '1rem 1.5rem', whiteSpace: 'nowrap', textAlign: 'right' }}>
+                                  <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'rgb(17 24 39)' }}>
+                                    {p.montant_du?.toFixed(2)} €
+                                  </span>
+                                </td>
+
+                                {/* Payé */}
+                                <td style={{ padding: '1rem 1.5rem', whiteSpace: 'nowrap', textAlign: 'right' }}>
+                                  <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'rgb(22 163 74)' }}>
+                                    {p.montant_paye?.toFixed(2)} €
+                                  </span>
+                                </td>
+
+                                {/* Restant */}
+                                <td style={{ padding: '1rem 1.5rem', whiteSpace: 'nowrap', textAlign: 'right' }}>
+                                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: restant > 0 ? 'rgb(220 38 38)' : 'rgb(107 114 128)' }}>
+                                    {restant.toFixed(2)} €
+                                  </span>
+                                </td>
+
+                                {/* Échéance */}
+                                <td style={{ padding: '1rem 1.5rem', whiteSpace: 'nowrap' }}>
+                                  {p.date_echeance ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.875rem', color: 'rgb(107 114 128)' }}>
+                                      <Clock size={14} style={{ color: 'rgb(156 163 175)' }} />
+                                      <span>{moment(p.date_echeance).format('DD/MM/YYYY')}</span>
+                                    </div>
+                                  ) : (
+                                    <span style={{ fontSize: '0.875rem', color: 'rgb(156 163 175)' }}>-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}
